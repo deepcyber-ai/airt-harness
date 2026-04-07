@@ -36,13 +36,15 @@ from typing import Any
 
 @dataclass
 class CanonicalResponse:
-    """Normalised response from any target."""
+    """Normalised response from any target.
+
+    Engagement-specific fields (agent thoughts, guardrail events, custom
+    metadata) belong in `raw`, which holds the full target response.
+    """
 
     answer: str = ""
     session_id: str = ""
     conversation_type: str = "ai"
-    agent_thoughts: list[dict] = field(default_factory=list)
-    guardrails: list[dict] = field(default_factory=list)
     raw: dict = field(default_factory=dict)
     error: str | None = None
 

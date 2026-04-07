@@ -316,11 +316,11 @@ display_name: "My Target"    # shown in GUI title and health endpoint
 
 Features:
 - **Chat panel** with conversation history and session management
-- **Agent Thoughts tab** showing per-message reasoning (if the target returns it)
-- **Guardrails tab** showing per-message scores and triggered status
+- **Raw Response tab** showing the full target response (engagement-specific fields like agent thoughts or guardrail events appear here if the mapper preserves them in `raw`)
 - **Auth tab** for verifying/refreshing authentication
 - **Backend switching** between real and mock at runtime
 - **Intel tab** showing accumulated API call statistics
+- **Health tab** showing the harness configuration
 
 ## Intel Collection
 
@@ -334,10 +334,12 @@ Every API call through the harness is recorded to `<profile_dir>/intel/responses
   "target": "example",
   "prompt": "What is an ISA?",
   "answer": "An Individual Savings Account is...",
-  "agent_thoughts": [],
-  "guardrails": []
+  "raw": { "...": "full target response (engagement-specific fields live here)" },
+  "error": null
 }
 ```
+
+The `raw` field holds whatever the target returned -- including any custom metadata, agent thoughts, guardrail events, or other engagement-specific data. The harness itself stays neutral and does not parse those fields.
 
 ## License
 

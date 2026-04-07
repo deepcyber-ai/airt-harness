@@ -94,57 +94,19 @@ def harness_auth(harness_url):
 
 
 def format_response(data):
-    """Format harness response for display."""
-    answer = data.get("answer", "")
-    events = data.get("events", [])
-
-    parts = [answer]
-
-    triggered = [e for e in events if e.get("triggered")]
-    if triggered:
-        parts.append("\n\n---\n*Guardrails triggered:*")
-        for e in triggered:
-            parts.append(
-                f"- **{e['name']}** ({e.get('type', e.get('guardrail_type', '?'))}): "
-                f"score {e['score']}/{e['threshold']} -- {e.get('reason', '')[:100]}"
-            )
-
-    return "\n".join(parts)
+    """Format harness response for display -- just the assistant answer."""
+    return data.get("answer", "")
 
 
-def format_thoughts(data):
-    """Format agent_thoughts for sidebar display."""
-    thoughts = data.get("agent_thoughts", [])
-    if not thoughts:
-        return "*No agent thoughts in response*"
-
-    lines = []
-    for t in thoughts:
-        node = t.get("node_name", "?")
-        thought = t.get("agent_thought", "")
-        if len(thought) > 200:
-            thought = thought[:200] + "..."
-        lines.append(f"**{node}**\n{thought}")
-
-    return "\n\n---\n".join(lines)
-
-
-def format_events(data):
-    """Format events/guardrails for sidebar display."""
-    events = data.get("events", [])
-    if not events:
-        return "*No guardrail events in response*"
-
-    lines = []
-    for e in events:
-        status = "TRIGGERED" if e.get("triggered") else "passed"
-        lines.append(
-            f"**{e.get('name', '?')}** ({e.get('type', e.get('guardrail_type', '?'))}): "
-            f"{status} -- score {e.get('score', '?')}/{e.get('threshold', '?')}\n"
-            f"_{e.get('reason', '')[:150]}_"
-        )
-
-    return "\n\n---\n".join(lines)
+def format_raw(data):
+    """Pretty-print the full raw target response for the Raw Response tab."""
+    raw = data.get("raw") if data else None
+    if not raw:
+        return "*No raw response available*"
+    try:
+        return "```json\n" + json.dumps(raw, indent=2, default=str) + "\n```"
+    except Exception as e:
+        return f"*Could not serialise raw response: {e}*"
 
 
 # -- Build GUI --------------------------------------------------------------
@@ -193,14 +155,9 @@ def create_app(harness_url):
         state["last_response"] = None
         return [], f"Session: {state['session_id']}"
 
-    def get_thoughts():
+    def get_raw():
         if state["last_response"]:
-            return format_thoughts(state["last_response"])
-        return "*Send a message first*"
-
-    def get_events():
-        if state["last_response"]:
-            return format_events(state["last_response"])
+            return format_raw(state["last_response"])
         return "*Send a message first*"
 
     def get_health():
@@ -276,13 +233,9 @@ def create_app(harness_url):
                     switch_btn = gr.Button("Switch", variant="secondary")
 
                 with gr.Tabs():
-                    with gr.Tab("Agent Thoughts"):
-                        thoughts_md = gr.Markdown("*Send a message first*")
-                        refresh_thoughts_btn = gr.Button("Refresh", size="sm")
-
-                    with gr.Tab("Guardrails"):
-                        events_md = gr.Markdown("*Send a message first*")
-                        refresh_events_btn = gr.Button("Refresh", size="sm")
+                    with gr.Tab("Raw Response"):
+                        raw_md = gr.Markdown("*Send a message first*")
+                        refresh_raw_btn = gr.Button("Refresh", size="sm")
 
                     with gr.Tab("Intel"):
                         intel_md = gr.Markdown("*Click refresh to load*")
@@ -299,16 +252,14 @@ def create_app(harness_url):
         # Events
         def chat_and_update(message, history):
             history, cleared = respond(message, history)
-            thoughts = get_thoughts()
-            events = get_events()
-            return history, cleared, thoughts, events
+            raw = get_raw()
+            return history, cleared, raw
 
-        msg.submit(chat_and_update, [msg, chatbot], [chatbot, msg, thoughts_md, events_md])
-        send_btn.click(chat_and_update, [msg, chatbot], [chatbot, msg, thoughts_md, events_md])
+        msg.submit(chat_and_update, [msg, chatbot], [chatbot, msg, raw_md])
+        send_btn.click(chat_and_update, [msg, chatbot], [chatbot, msg, raw_md])
         new_btn.click(new_session, [chatbot], [chatbot, status])
-        switch_btn.click(switch_backend, [backend_dd], [thoughts_md, chatbot, status])
-        refresh_thoughts_btn.click(get_thoughts, [], [thoughts_md])
-        refresh_events_btn.click(get_events, [], [events_md])
+        switch_btn.click(switch_backend, [backend_dd], [raw_md, chatbot, status])
+        refresh_raw_btn.click(get_raw, [], [raw_md])
         refresh_intel_btn.click(get_intel, [], [intel_md])
         auth_btn.click(do_auth, [], [auth_md])
         refresh_health_btn.click(get_health, [], [health_md])

@@ -286,7 +286,7 @@ def _send(message: str, session_id: str) -> CanonicalResponse:
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "session_id": session_id, "backend": BACKEND, "target": TARGET_NAME,
         "prompt": message, "answer": result.answer,
-        "agent_thoughts": result.agent_thoughts, "guardrails": result.guardrails,
+        "raw": result.raw,
         "error": result.error,
     })
     return result
@@ -365,8 +365,9 @@ async def completions(request: Request):
         "choices": [{"index": 0, "message": {"role": "assistant", "content": result.answer}, "finish_reason": "stop"}],
         "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0},
         "metadata": {
-            "session_id": result.session_id, "conversation_type": result.conversation_type,
-            "agent_thoughts": result.agent_thoughts, "guardrails": result.guardrails,
+            "session_id": result.session_id,
+            "conversation_type": result.conversation_type,
+            "raw": result.raw,
         },
     }
     if result.error:
@@ -396,9 +397,9 @@ async def chat(request: Request, x_session_id: str = Header(default=None)):
     result = await _send_with_retry(message, session_id)
 
     if result.error:
-        return JSONResponse({"session_id": session_id, "answer": result.answer, "error": result.error, "agent_thoughts": [], "events": []}, status_code=502)
+        return JSONResponse({"session_id": session_id, "answer": result.answer, "error": result.error, "raw": result.raw}, status_code=502)
 
-    return {"session_id": session_id, "answer": result.answer, "message": result.answer, "content": result.answer, "agent_thoughts": result.agent_thoughts, "events": result.guardrails}
+    return {"session_id": session_id, "answer": result.answer, "message": result.answer, "content": result.answer, "raw": result.raw}
 
 
 @app.get("/v1/models")
