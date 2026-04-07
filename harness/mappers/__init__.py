@@ -30,7 +30,9 @@ The module must expose a `create_mapper(config) -> BaseMapper` function.
 from __future__ import annotations
 
 import importlib
+import importlib.util
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any
 
 
@@ -170,9 +172,6 @@ def load_mapper(target_name: str, config: dict) -> BaseMapper:
     if custom_module:
         if custom_module.endswith(".py") or "/" in custom_module:
             # File path (relative to CWD or absolute)
-            import importlib.util
-            from pathlib import Path
-
             file_path = Path(custom_module).resolve()
             if not file_path.exists():
                 raise ValueError(
