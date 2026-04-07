@@ -1,0 +1,47 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.eggs/
+*.egg
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+
+# Secrets and credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.crt
+certs/
+
+# Profile-scoped runtime data (per profile dir)
+profiles/*/harness.log
+profiles/*/mock_server.log
+profiles/*/mock-audit.jsonl
+profiles/*/.harness_state.json
+profiles/*/intel/
+
+# Generic results / logs
+results/
+*.log
+*.jsonl
+
+# IDE
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# OS
+Thumbs.db

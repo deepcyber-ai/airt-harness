@@ -1,0 +1,49 @@
+# =====================================================================
+# DeepCyber AI Red Teaming Harness -- Default Profile (Deep Vault Capital)
+# =====================================================================
+#
+# A fictional fintech chatbot for out-of-the-box testing.
+# No real API, certs, or credentials needed -- just start with mock.
+#
+# Run:
+#   python -m harness.mock --backend echo
+#   BACKEND=mock uvicorn harness.server:app --port 8000
+# =====================================================================
+
+target: example                           # built-in flat-JSON mapper
+display_name: "Deep Vault Capital"        # shown in GUI and health endpoint
+
+api:
+  url: "http://localhost:8089"
+  path: "/chat"
+
+auth:
+  mode: none
+  bearer:
+    env_var: DCV_BEARER_TOKEN
+    prefix: "Bearer "
+  token_refresh:
+    order: ["cli"]
+    cli:
+      command: "echo demo-token-not-real"
+
+tls:
+  cert: null
+  key: null
+  ca_bundle: null
+  verify: false
+
+session:
+  header: x-session-id
+  correlation_header: null
+  prefix: "demo-"
+
+headers: {}
+
+mock:
+  url: "http://localhost:8089"
+  backend: echo
+
+harness:
+  port: 8000
+  # intel_dir and log_file default to the profile directory (auto-scoped)
