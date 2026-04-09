@@ -1,6 +1,6 @@
 # DeepCyber AI Red Teaming Harness
 
-A generic test harness for AI red teaming engagements. Sits between your red team tools (PyRIT, Promptfoo, Spikee, curl) and the target AI system, providing a canonical API, protocol translation, mock emulation, and intelligence collection.
+A generic test harness for AI red teaming engagements. Sits between your red team tools and the target AI system, providing a unified canonical API, protocol translation, mock emulation, intelligence collection, and regression replay.
 
 ```
     ____                  ______      __
@@ -11,6 +11,21 @@ A generic test harness for AI red teaming engagements. Sits between your red tea
                /_/          /____/
               AI Red Teaming Harness
 ```
+
+```bash
+pip install airt-harness
+```
+
+**One harness, any target, any tool.** Write a mapper once for your target's wire format, then every red team tool — PyRIT, Promptfoo, Garak, Spikee, curl, or your own scripts — talks to the same canonical API. Switch between the real target and a local mock without changing your tools. Replay recorded breach sessions for regression testing after fixes.
+
+### Key capabilities
+
+- **Unified API** — canonical OpenAI-compatible `/v1/chat/completions` endpoint in front of any target, regardless of its native wire format
+- **Protocol translation** — bidirectional message mappers handle auth, headers, session management, and response parsing per target
+- **Mock emulation** — local mock server with pluggable LLM backends (Ollama, OpenAI, Anthropic, Gemini, DeepSeek, echo) using the target's exact wire format
+- **Intel collection** — every request/response logged as JSONL for analysis and replay
+- **Regression replay** — replay recorded attack sessions from intel logs or curated metabase CSVs, compare responses, and score with an LLM judge
+- **Profile isolation** — per-engagement profiles keep configs, logs, and intel separate
 
 ## Architecture
 
@@ -40,6 +55,28 @@ The harness ships with a default profile (**Deep Vault Capital**, a fictional UK
 
 ```bash
 # Install
+pip install airt-harness
+
+# Launch the harness container (echo backend, no API key needed)
+MOCK_BACKEND=echo airt-launch
+
+# Test
+curl http://localhost:8000/health
+curl -X POST http://localhost:8000/chat \
+  -H "Content-Type: application/json" \
+  -d '{"input": "What is an ISA?"}'
+
+# Replay recorded sessions for regression testing
+airt-replay profiles/default/intel/ --list-sessions
+airt-replay profiles/default/intel/ --session <session-id>
+
+# Stop
+airt-stop
+```
+
+### From source (without Docker)
+
+```bash
 pip install -r requirements.txt
 
 # Start mock server with the default profile
@@ -49,13 +86,9 @@ python -m harness.mock --backend echo --port 8089
 BACKEND=mock uvicorn harness.server:app --port 8000
 
 # Test
-curl http://localhost:8000/health
 curl -X POST http://localhost:8000/chat \
   -H "Content-Type: application/json" \
   -d '{"input": "What is an ISA?"}'
-curl -X POST http://localhost:8000/v1/chat/completions \
-  -H "Content-Type: application/json" \
-  -d '{"messages":[{"role":"user","content":"What is an ISA?"}]}'
 ```
 
 ## Docker
@@ -340,6 +373,92 @@ Every API call through the harness is recorded to `<profile_dir>/intel/responses
 ```
 
 The `raw` field holds whatever the target returned -- including any custom metadata, agent thoughts, guardrail events, or other engagement-specific data. The harness itself stays neutral and does not parse those fields.
+
+## Replay
+
+Replay recorded sessions against the running harness for regression testing.  Send the exact attacker prompts from a previous test and compare the new responses with the originals.  Optionally score each turn with an LLM judge.
+
+```bash
+# Start the harness first (mock or real)
+BACKEND=mock uvicorn harness.server:app --port 8000
+```
+
+### Two source types (auto-detected)
+
+| Source | Path | How it works |
+|---|---|---|
+| **Intel logs** | Directory or `.jsonl` file | Reads `responses.jsonl`, groups by session_id, sorts by timestamp |
+| **Metabase CSV** | `.csv` file | Reads CSV with `session_id`, `turn`, `request`/`prompt`, `answer`/`response` columns |
+
+Intel logs are what the harness records automatically (see [Intel Collection](#intel-collection)).  A metabase CSV is a curated subset, typically produced during an engagement, containing selected sessions for regression testing.
+
+### List sessions
+
+```bash
+# From intel logs
+python -m harness.replay profiles/default/intel/ --list-sessions
+
+# From a metabase CSV
+python -m harness.replay evidence/metabase.csv --list-sessions
+```
+
+### Replay a session
+
+```bash
+python -m harness.replay evidence/metabase.csv --session abc123
+```
+
+Partial session-ID matching is supported.  The replay sends each prompt to the harness `/chat` endpoint using a fresh session ID and compares the new response with the original.
+
+### Judge evaluation
+
+Score each replayed turn PASS/FAIL with an LLM judge:
+
+```bash
+python -m harness.replay evidence/metabase.csv --session abc123 \
+    --evaluate \
+    --judge-config replay/judge_config.yaml \
+    --judge-prompts replay/judge_prompts.yaml \
+    -o results/regression-report.md
+```
+
+Judge config and judge prompts are engagement-specific files — the harness provides the multi-provider framework.  Supported judge providers:
+
+| Provider | Config key | Notes |
+|---|---|---|
+| AWS Bedrock | `bedrock` | Zero data retention; requires `boto3` |
+| Ollama (local) | `ollama` | Fully air-gapped; no data leaves your machine |
+| Google Gemini | `gemini` | Direct API |
+| Anthropic Claude | `claude` | Direct API |
+| OpenAI-compatible | (default) | vLLM, RunPod, LiteLLM, or any chat/completions endpoint |
+
+### Metabase format compatibility
+
+The replay works with any CSV that has these four columns:
+
+| Column | Required | Maps to |
+|---|---|---|
+| `session_id` | Yes | Groups turns into sessions |
+| `turn` | Yes | Orders turns within a session |
+| `request` or `prompt` | Yes | The attacker prompt (replayed verbatim) |
+| `answer` or `response` | Yes | The original response (used for comparison) |
+
+Additional columns (finding_id, scenario_id, guardrail scores, etc.) are ignored by the generic replay engine.  Engagement-specific wrappers can use them for navigation and reporting.
+
+### CLI reference
+
+| Flag | Purpose |
+|---|---|
+| `source` (positional) | Path to intel dir, `.jsonl`, or `.csv` (default: `.`) |
+| `--list-sessions` | List all sessions in the source |
+| `--session ID` | Replay a session (partial match supported) |
+| `--harness-url URL` | Harness URL (default: `$HARNESS_URL` or `http://localhost:8000`) |
+| `--delay SECONDS` | Delay between turns (default: 1) |
+| `--evaluate` | Run LLM judge on replayed responses |
+| `--judge-config FILE` | Path to judge config YAML |
+| `--judge-prompts FILE` | Path to judge prompts YAML |
+| `--judge-criteria KEY` | Apply a single criteria key to all turns |
+| `-o FILE` | Save comparison report to file |
 
 ## License
 

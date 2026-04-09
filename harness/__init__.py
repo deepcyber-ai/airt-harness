@@ -16,4 +16,4 @@ Usage:
 (c) 2026 Deep Cyber Ltd. Apache 2.0 licensed.
 """
 
-__version__ = "1.1.0"
+__version__ = "1.2.0"

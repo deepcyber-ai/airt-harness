@@ -1,0 +1,45 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "airt-harness"
+version = "1.2.0"
+description = "DeepCyber AI Red Teaming Harness"
+readme = "README.md"
+license = {text = "Apache-2.0"}
+requires-python = ">=3.10"
+authors = [{name = "Deep Cyber Ltd", email = "info@deepcyber.co.uk"}]
+keywords = ["ai", "red-teaming", "security", "llm", "owasp"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Topic :: Security",
+]
+
+[project.urls]
+Homepage = "https://github.com/deepcyber-ai/airt-harness"
+Repository = "https://github.com/deepcyber-ai/airt-harness"
+dependencies = [
+    "httpx>=0.27",
+    "fastapi>=0.115",
+    "uvicorn>=0.32",
+    "pyyaml>=6.0",
+    "python-dotenv>=1.0",
+    "gradio>=5.0",
+    "requests>=2.31",
+]
+
+[project.optional-dependencies]
+bedrock = ["boto3>=1.34"]
+
+[project.scripts]
+airt-replay = "harness.replay:main"
+airt-launch = "harness.docker:launch"
+airt-stop   = "harness.docker:stop"
+airt-logs   = "harness.docker:logs"
+
+[tool.setuptools.packages.find]
+include = ["harness*"]
