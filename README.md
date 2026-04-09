@@ -111,6 +111,7 @@ docker run -p 8000:8000 \
 | `/v1/chat/completions` | POST | Canonical OpenAI-compatible (use with any OpenAI-compatible tool) |
 | `/chat` | POST | Simplified: `{"input": "message"}` + optional `x-session-id` header |
 | `/auth` | POST | Verify/refresh authentication (mTLS cert check or token refresh) |
+| `/firewall` | POST | Toggle HB Firewall on/off (off by default) |
 | `/init` | POST | Initialise a session (for targets that require explicit init) |
 | `/backend` | POST | Switch between real and mock backend at runtime |
 | `/token` | POST | Hot-swap bearer token without restart |
@@ -276,6 +277,124 @@ Two ways:
 3. Run the harness from a directory where the file or module is reachable
 
 This lets you keep customer-specific mappers in private repos while sharing the harness scaffolding from this one.
+
+### Generic mapper (YAML-only, no Python)
+
+For targets with standard REST APIs, use the built-in `generic` mapper instead of writing a custom mapper file. Configure the request body template and response extraction path entirely in profile.yaml:
+
+```yaml
+target: generic
+
+api:
+  url: "https://api.example.com"
+  path: "/v1/chat"
+
+# Request body — {{PROMPT}} is replaced with the user message
+request_template:
+  model: "gpt-4"
+  messages:
+    - role: "user"
+      content: "{{PROMPT}}"
+
+# Dot-notation path to extract the answer from the JSON response
+response_path: "choices.0.message.content"
+```
+
+Dot-notation examples:
+
+| Target response shape | `response_path` |
+|---|---|
+| `{"answer": "..."}` | `answer` |
+| `{"responses": [{"value": "..."}]}` | `responses.0.value` |
+| `{"choices": [{"message": {"content": "..."}}]}` | `choices.0.message.content` |
+
+For targets with complex wire formats (SSE, double-encoding, custom session init), use a custom mapper instead.
+
+## PyRIT Integration
+
+The harness provides PyRIT-compatible targets for automated red teaming orchestration.
+
+```bash
+pip install airt-harness[pyrit]
+```
+
+### ProxyTarget — route through the harness
+
+```python
+from harness.pyrit import ProxyTarget
+
+target = ProxyTarget(
+    harness_url="http://localhost:8000",
+    session_id="RedTeam-001",
+)
+
+# Use with any PyRIT orchestrator
+from pyrit.orchestrator import PromptSendingOrchestrator
+orchestrator = PromptSendingOrchestrator(objective_target=target)
+```
+
+The `ProxyTarget` sends prompts to the harness `/chat` endpoint. The harness handles protocol translation, auth, session management, and intel collection — PyRIT just sees a simple text-in/text-out target.
+
+### BedrockTarget — direct AWS Bedrock
+
+```python
+from harness.pyrit import BedrockTarget
+
+target = BedrockTarget(
+    model_id="anthropic.claude-sonnet-4-6",
+    region="eu-west-2",
+)
+```
+
+Requires `pip install airt-harness[bedrock]` and AWS credentials configured.
+
+## HB Firewall
+
+Optional input screening layer using the HumanBound Firewall. **Off by default.** When enabled, every message is evaluated before reaching the target — blocked messages get a standard refusal response.
+
+### Enable at runtime
+
+```bash
+# Enable
+curl -X POST http://localhost:8000/firewall -d '{"enabled": true}'
+
+# Disable
+curl -X POST http://localhost:8000/firewall -d '{"enabled": false}'
+
+# Toggle
+curl -X POST http://localhost:8000/firewall
+
+# Check status
+curl http://localhost:8000/health | jq .firewall_enabled
+```
+
+### Profile config (optional)
+
+```yaml
+firewall:
+  enabled: false                          # default off
+  agent_config: "hb-firewall/agent.yaml"  # HB security policy
+  model_path: null                        # optional Tier 2 model
+```
+
+### A/B testing workflow
+
+Run the same attack sessions with the firewall off and on to measure its effectiveness:
+
+```bash
+# 1. Run tests without firewall
+airt-replay evidence/metabase.csv --session abc123 -o results/no-firewall.md
+
+# 2. Enable firewall
+curl -X POST http://localhost:8000/firewall -d '{"enabled": true}'
+
+# 3. Run the same tests
+airt-replay evidence/metabase.csv --session abc123 -o results/with-firewall.md
+
+# 4. Compare reports
+```
+
+Requires `pip install hb-firewall` — the firewall is lazy-loaded only when first enabled.
 
 ## Token Refresh
 

@@ -24,7 +24,7 @@ import requests
 
 
 CONTAINER_NAME = os.environ.get("CONTAINER_NAME", "airt-harness")
-AIRT_IMAGE = os.environ.get("AIRT_IMAGE", "deepcyberx/airt-harness:1.2.0")
+AIRT_IMAGE = os.environ.get("AIRT_IMAGE", "deepcyberx/airt-harness:1.3.0")
 
 
 def _docker(*args: str, capture: bool = False) -> subprocess.CompletedProcess:

@@ -7,7 +7,7 @@
 #   ./scripts/airt-launch.sh another               # any profile under profiles/<name>/
 #
 # Env overrides:
-#   AIRT_IMAGE        Docker image                 (default: deepcyberx/airt-harness:1.2.0)
+#   AIRT_IMAGE        Docker image                 (default: deepcyberx/airt-harness:1.3.0)
 #   MOCK_BACKEND      mock LLM backend             (default: gemini)
 #   AIRT_ENV_FILE     .env to source for API keys  (default: .env in current directory)
 #   AIRT_PORT_GUI     GUI port                     (default: 7860)
@@ -24,7 +24,7 @@
 set -euo pipefail
 
 CONTAINER_NAME="${CONTAINER_NAME:-airt-harness}"
-AIRT_IMAGE="${AIRT_IMAGE:-deepcyberx/airt-harness:1.2.0}"
+AIRT_IMAGE="${AIRT_IMAGE:-deepcyberx/airt-harness:1.3.0}"
 MOCK_BACKEND="${MOCK_BACKEND:-gemini}"
 AIRT_PORT_GUI="${AIRT_PORT_GUI:-7860}"
 AIRT_PORT_API="${AIRT_PORT_API:-8000}"

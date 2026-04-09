@@ -154,6 +154,7 @@ class BaseMapper:
 
 _BUILTIN_MAPPERS = {
     "example": "harness.mappers.example",
+    "generic": "harness.mappers.generic",
 }
 
 

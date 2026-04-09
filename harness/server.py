@@ -18,6 +18,7 @@ Endpoints:
     POST /init                  Initialise a session (if target requires it)
     GET  /health                Config summary
     POST /backend               Switch real/mock
+    POST /firewall              Toggle HB Firewall (off by default)
     GET  /intel/summary         Intel store summary
     POST /token                 Hot-swap bearer token
 """
@@ -50,7 +51,7 @@ BANNER = r"""
  / /_/ /  __/  __/ /_/ / /___/ /_/ / /_/ /  __/ /
 /_____/\___/\___/ .___/\____/\__, /_.___/\___/_/
                /_/          /____/
-              AI Red Teaming Harness  v1.1
+              AI Red Teaming Harness  v1.3
 """
 
 # -- Profile ---------------------------------------------------------------
@@ -100,6 +101,12 @@ def _load_backend() -> str:
 
 
 BACKEND = _load_backend()
+
+# -- Firewall (off by default) ---------------------------------------------
+
+_FIREWALL_CFG = PROFILE.get("firewall", {})
+FIREWALL_ENABLED = _load_state().get("firewall_enabled", _FIREWALL_CFG.get("enabled", False))
+_firewall = None  # lazy-loaded HB Firewall instance
 
 # -- Logging ---------------------------------------------------------------
 
@@ -262,6 +269,25 @@ def _init_if_needed(session_id: str):
 
 def _send(message: str, session_id: str) -> CanonicalResponse:
     _init_if_needed(session_id)
+
+    # Firewall pre-screen (if enabled and loaded).
+    if FIREWALL_ENABLED and _firewall:
+        from harness.firewall import evaluate_message, build_blocked_response
+
+        fw_result = evaluate_message(_firewall, message)
+        if fw_result["blocked"]:
+            blocked = build_blocked_response(session_id, fw_result)
+            log.info("Firewall blocked: tier=%s verdict=%s", fw_result["tier"], fw_result["verdict"])
+            _record_intel({
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "session_id": session_id, "backend": "firewall", "target": TARGET_NAME,
+                "prompt": message, "answer": blocked["answer"],
+                "raw": blocked.get("raw", {}),
+                "error": None,
+            })
+            return CanonicalResponse(
+                answer=blocked["answer"], session_id=session_id, raw=blocked.get("raw", {})
+            )
 
     if BACKEND == "mock":
         url = f"{mapper.get_mock_url().rstrip('/')}/chat"
@@ -473,6 +499,36 @@ async def switch_backend(request: Request):
     return {"backend": BACKEND, "api_url": _api_url}
 
 
+@app.post("/firewall")
+async def toggle_firewall(request: Request):
+    """Toggle HB Firewall on or off. Off by default."""
+    global FIREWALL_ENABLED, _firewall
+    raw = await request.body()
+    if raw:
+        body = json.loads(raw)
+        new_state = body.get("enabled", not FIREWALL_ENABLED)
+    else:
+        new_state = not FIREWALL_ENABLED
+
+    FIREWALL_ENABLED = bool(new_state)
+    _save_state({"firewall_enabled": FIREWALL_ENABLED})
+
+    if FIREWALL_ENABLED and _firewall is None:
+        try:
+            from harness.firewall import load_firewall
+            agent_cfg = _FIREWALL_CFG.get("agent_config", "hb-firewall/agent.yaml")
+            model_path = _FIREWALL_CFG.get("model_path")
+            _firewall = load_firewall(agent_cfg, model_path)
+            log.info("HB Firewall loaded: %s", agent_cfg)
+        except ImportError as e:
+            FIREWALL_ENABLED = False
+            _save_state({"firewall_enabled": False})
+            return JSONResponse({"error": str(e), "firewall_enabled": False}, status_code=500)
+
+    log.info("/firewall -> %s", "enabled" if FIREWALL_ENABLED else "disabled")
+    return {"firewall_enabled": FIREWALL_ENABLED}
+
+
 @app.post("/token")
 async def update_token(request: Request):
     body = await request.json()
@@ -505,7 +561,7 @@ async def health():
         cert_status = f"MISSING ({cert_path})"
     else:
         cert_status = "not configured"
-    return {"status": "ok", "target": TARGET_NAME, "display_name": DISPLAY_NAME, "mapper": mapper.name, "backend": BACKEND, "api_url": _api_url, "cert_status": cert_status, "profile": PROFILE_PATH, "intel_dir": INTEL_DIR}
+    return {"status": "ok", "target": TARGET_NAME, "display_name": DISPLAY_NAME, "mapper": mapper.name, "backend": BACKEND, "api_url": _api_url, "cert_status": cert_status, "firewall_enabled": FIREWALL_ENABLED, "profile": PROFILE_PATH, "intel_dir": INTEL_DIR}
 
 
 @app.on_event("shutdown")
