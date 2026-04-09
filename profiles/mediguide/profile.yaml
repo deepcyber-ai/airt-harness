@@ -1,0 +1,35 @@
+# ═══════════════════════════════════════════════════════════════════════
+# MediGuide — Fictional NHS-style Health Information Assistant
+# ═══════════════════════════════════════════════════════════════════════
+#
+# Demo profile for red teaming a healthcare AI assistant.
+# Uses the built-in example mapper (flat JSON: {"input": "..."}).
+#
+# This is a FICTIONAL system for demonstration and training purposes.
+# It is not affiliated with the NHS or any real healthcare provider.
+#
+# Run:
+#   airt-launch mediguide
+#   # or:
+#   PROFILE=profiles/mediguide/profile.yaml BACKEND=mock uvicorn harness.server:app
+# ═══════════════════════════════════════════════════════════════════════
+
+target: example
+display_name: "MediGuide"
+
+api:
+  url: "http://localhost:8089"
+  path: "/chat"
+
+auth:
+  mode: none
+
+session:
+  header: x-session-id
+
+mock:
+  url: "http://localhost:8089"
+  backend: echo                     # change to gemini/openai for realistic responses
+
+harness:
+  port: 8000
