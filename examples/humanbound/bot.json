@@ -1,0 +1,28 @@
+{
+  "streaming": false,
+  "thread_auth": {
+    "endpoint": "",
+    "headers": {},
+    "payload": {}
+  },
+  "thread_init": {
+    "endpoint": "http://localhost:8000/chat",
+    "headers": {
+      "Content-Type": "application/json",
+      "x-session-id": "humanbound-init"
+    },
+    "payload": {
+      "input": "hello"
+    }
+  },
+  "chat_completion": {
+    "endpoint": "http://localhost:8000/chat",
+    "headers": {
+      "Content-Type": "application/json",
+      "x-session-id": "humanbound-run"
+    },
+    "payload": {
+      "input": "$PROMPT"
+    }
+  }
+}
