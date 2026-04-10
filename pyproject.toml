@@ -41,6 +41,7 @@ airt-replay = "harness.replay:main"
 airt-launch = "harness.docker:launch"
 airt-stop   = "harness.docker:stop"
 airt-logs   = "harness.docker:logs"
+airt-docs   = "harness.docs_cmd:main"
 
 [tool.setuptools.packages.find]
 include = ["harness*"]
