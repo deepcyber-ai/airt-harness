@@ -13,21 +13,21 @@ Two source types are supported:
 
 Usage:
     # List sessions from intel logs
-    python -m harness.replay profiles/default/intel/ --list-sessions
+    airt-replay profiles/default/intel/ --list-sessions
 
     # List sessions from a metabase CSV
-    python -m harness.replay evidence/metabase.csv --list-sessions
+    airt-replay evidence/metabase.csv --list-sessions
 
     # Replay a session (partial session-ID match supported)
-    python -m harness.replay evidence/metabase.csv --session abc123
+    airt-replay evidence/metabase.csv --session abc123
 
     # Replay with LLM judge evaluation
-    python -m harness.replay evidence/metabase.csv --session abc123 \\
+    airt-replay evidence/metabase.csv --session abc123 \\
         --evaluate --judge-config replay/judge_config.yaml \\
         --judge-prompts replay/judge_prompts.yaml
 
     # Save the comparison report
-    python -m harness.replay evidence/metabase.csv --session abc123 \\
+    airt-replay evidence/metabase.csv --session abc123 \\
         -o results/regression.md
 
 Requires: the harness running at --harness-url (default http://localhost:8000).
@@ -642,10 +642,10 @@ Source types (auto-detected):
   .csv                  Curated metabase (session_id + turn + request + answer)
 
 Examples:
-  python -m harness.replay profiles/default/intel/ --list-sessions
-  python -m harness.replay evidence/metabase.csv --list-sessions
-  python -m harness.replay evidence/metabase.csv --session abc123
-  python -m harness.replay evidence/metabase.csv --session abc123 \\
+  airt-replay profiles/default/intel/ --list-sessions
+  airt-replay evidence/metabase.csv --list-sessions
+  airt-replay evidence/metabase.csv --session abc123
+  airt-replay evidence/metabase.csv --session abc123 \\
       --evaluate --judge-config replay/judge_config.yaml \\
       --judge-prompts replay/judge_prompts.yaml -o results/report.md
         """,

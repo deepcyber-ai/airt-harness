@@ -515,16 +515,16 @@ Intel logs are what the harness records automatically (see [Intel Collection](#i
 
 ```bash
 # From intel logs
-python -m harness.replay profiles/default/intel/ --list-sessions
+airt-replay profiles/default/intel/ --list-sessions
 
 # From a metabase CSV
-python -m harness.replay evidence/metabase.csv --list-sessions
+airt-replay evidence/metabase.csv --list-sessions
 ```
 
 ### Replay a session
 
 ```bash
-python -m harness.replay evidence/metabase.csv --session abc123
+airt-replay evidence/metabase.csv --session abc123
 ```
 
 Partial session-ID matching is supported.  The replay sends each prompt to the harness `/chat` endpoint using a fresh session ID and compares the new response with the original.
@@ -534,7 +534,7 @@ Partial session-ID matching is supported.  The replay sends each prompt to the h
 Score each replayed turn PASS/FAIL with an LLM judge:
 
 ```bash
-python -m harness.replay evidence/metabase.csv --session abc123 \
+airt-replay evidence/metabase.csv --session abc123 \
     --evaluate \
     --judge-config replay/judge_config.yaml \
     --judge-prompts replay/judge_prompts.yaml \
