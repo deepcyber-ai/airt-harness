@@ -18,10 +18,6 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Topic :: Security",
 ]
-
-[project.urls]
-Homepage = "https://github.com/deepcyber-ai/airt-harness"
-Repository = "https://github.com/deepcyber-ai/airt-harness"
 dependencies = [
     "httpx>=0.27",
     "fastapi>=0.115",
@@ -31,6 +27,10 @@ dependencies = [
     "gradio>=5.0",
     "requests>=2.31",
 ]
+
+[project.urls]
+Homepage = "https://github.com/deepcyber-ai/airt-harness"
+Repository = "https://github.com/deepcyber-ai/airt-harness"
 
 [project.optional-dependencies]
 bedrock = ["boto3>=1.34"]
