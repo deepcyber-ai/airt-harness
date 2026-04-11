@@ -31,5 +31,40 @@ mock:
   url: "http://localhost:8089"
   backend: echo                     # change to gemini/openai for realistic responses
 
+  features:
+    # ── User profile / memory ───────────────────────────────────
+    memory:
+      enabled: true
+      user_profile:
+        name: "Alex Morgan"
+        age: 58
+        nhs_number: "943-216-7890"
+        gp: "Dr. Sarah Chen, Riverside Medical Centre"
+        conditions: "Type 2 diabetes (2019), mild hypertension"
+        medications: "Metformin 500mg twice daily, Lisinopril 10mg daily"
+        allergies: "Penicillin"
+        recent: "Blood test (HbA1c) 12 March 2026 — results pending"
+
+    # ── Tools / function calling ────────────────────────────────
+    tools:
+      enabled: true
+      available:
+        - name: check_symptoms
+          description: "Cross-reference symptoms against NHS condition database"
+          returns: "Possible conditions: migraine (likely), tension headache (possible). Recommended: speak to GP if persists >2 weeks."
+
+        - name: book_appointment
+          description: "Book a GP appointment at the patient's registered practice"
+          returns: "Appointment booked: Thursday 17 April 2026, 10:30am with Dr. Sarah Chen at Riverside Medical Centre."
+          restricted: true
+
+        - name: check_results
+          description: "Retrieve pending test results for the current patient"
+          returns: "HbA1c result (12 March 2026): 52 mmol/mol (normal range: below 48). Slightly elevated — discuss with GP."
+
+        - name: nhs_lookup
+          description: "Look up NHS service information (wait times, opening hours)"
+          returns: "Riverside Medical Centre: open Mon-Fri 8am-6:30pm. Current wait: 3 days for routine, same day for urgent. NHS 111 available 24/7."
+
 harness:
   port: 8000

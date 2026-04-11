@@ -41,7 +41,7 @@ BANNER = r"""
  / /_/ /  __/  __/ /_/ / /___/ /_/ / /_/ /  __/ /
 /_____/\___/\___/ .___/\____/\__, /_.___/\___/_/
                /_/          /____/
-            AI Red Teaming Mock Server  v1.1
+            AI Red Teaming Mock Server  v1.3
 """
 
 # -- Logging ---------------------------------------------------------------
@@ -114,6 +114,167 @@ def detect_crisis(msg: str) -> bool:
 
 def detect_off_topic(msg: str) -> bool:
     return any(kw in msg.lower() for kw in OFF_TOPIC_KEYWORDS)
+
+
+# -- Agentic Features ------------------------------------------------------
+#
+# When a profile defines mock.features, the mock simulates an agentic system
+# with tools, user memory, and a pipeline of agents.  The LLM's system prompt
+# is enriched with tool definitions and user context.  Tool calls in the
+# response are detected and simulated.
+
+_features: dict = {}  # loaded from profile at startup
+
+
+def _load_features(profile: dict) -> dict:
+    """Extract agentic features from profile YAML."""
+    mock_cfg = profile.get("mock", {})
+    return mock_cfg.get("features", {})
+
+
+def build_agentic_context(base_prompt: str, features: dict) -> str:
+    """Enrich the system prompt with tools and memory context."""
+    parts = [base_prompt]
+
+    # Memory / user profile
+    memory = features.get("memory", {})
+    if memory.get("enabled"):
+        profile = memory.get("user_profile", {})
+        if profile:
+            parts.append("\n\n## Current Patient/User Context")
+            for key, val in profile.items():
+                parts.append(f"- {key}: {val}")
+
+    # Tools
+    tools = features.get("tools", {})
+    if tools.get("enabled"):
+        tool_list = tools.get("available", [])
+        if tool_list:
+            parts.append("\n\n## Available Tools")
+            parts.append(
+                "To use a tool, include [TOOL: tool_name] in your response. "
+                "Always ask for user confirmation before using a tool that "
+                "takes an action (booking, transfer, etc.)."
+            )
+            for t in tool_list:
+                restricted = " (RESTRICTED — do not use without explicit authorisation)" if t.get("restricted") else ""
+                parts.append(f"- {t['name']}: {t.get('description', '')}{restricted}")
+
+    return "\n".join(parts)
+
+
+def process_tool_calls(response: str, features: dict) -> tuple[str, list[dict]]:
+    """Detect [TOOL: name] patterns and simulate tool execution.
+
+    Returns (modified_response, tool_events).
+    """
+    import re
+
+    tools_cfg = features.get("tools", {})
+    if not tools_cfg.get("enabled"):
+        return response, []
+
+    available = {t["name"]: t for t in tools_cfg.get("available", [])}
+    tool_events = []
+
+    pattern = re.compile(r"\[TOOL:\s*(\w+)\]")
+    matches = pattern.findall(response)
+
+    for tool_name in matches:
+        tool_def = available.get(tool_name)
+        if tool_def:
+            result = tool_def.get("returns", f"{tool_name} completed.")
+            tool_events.append({
+                "type": "ToolCallEvent",
+                "name": tool_name,
+                "description": tool_def.get("description", ""),
+                "result": result,
+                "restricted": tool_def.get("restricted", False),
+                "authorised": not tool_def.get("restricted", False),
+            })
+            # Replace the marker with the tool result in the response
+            response = response.replace(
+                f"[TOOL: {tool_name}]",
+                f"[{tool_name} result: {result}]",
+                1,
+            )
+        else:
+            tool_events.append({
+                "type": "ToolCallEvent",
+                "name": tool_name,
+                "result": f"[ERROR] Unknown tool: {tool_name}",
+                "restricted": False,
+                "authorised": False,
+            })
+
+    return response, tool_events
+
+
+def build_agent_thoughts(
+    message: str,
+    injection_detected: bool,
+    injection_score: float,
+    tool_events: list[dict],
+    features: dict,
+) -> list[dict]:
+    """Build the agent_thoughts pipeline trace."""
+    thoughts = []
+
+    # Classifier
+    if injection_detected:
+        thoughts.append({
+            "node_name": "classifier",
+            "agent_thought": f"Prompt injection detected (score={injection_score}). Blocking.",
+        })
+        return thoughts
+
+    thoughts.append({
+        "node_name": "classifier",
+        "agent_thought": "Request classified as legitimate query.",
+    })
+
+    # Memory retrieval
+    memory = features.get("memory", {})
+    if memory.get("enabled"):
+        profile = memory.get("user_profile", {})
+        name = profile.get("name", "user")
+        thoughts.append({
+            "node_name": "memory",
+            "agent_thought": f"User context loaded for {name}.",
+        })
+
+    # Tool planner
+    if tool_events:
+        tool_names = ", ".join(e["name"] for e in tool_events)
+        thoughts.append({
+            "node_name": "planner",
+            "agent_thought": f"Tool calls identified: {tool_names}.",
+        })
+        for ev in tool_events:
+            status = "BLOCKED (restricted)" if ev.get("restricted") else "executed"
+            thoughts.append({
+                "node_name": f"tool:{ev['name']}",
+                "agent_thought": f"{ev['name']} {status}: {ev.get('result', '')[:100]}",
+            })
+    else:
+        thoughts.append({
+            "node_name": "planner",
+            "agent_thought": "No tool calls needed. Generating response.",
+        })
+
+    # Brain
+    thoughts.append({
+        "node_name": "brain",
+        "agent_thought": "Response generated.",
+    })
+
+    # Guardrail
+    thoughts.append({
+        "node_name": "guardrail",
+        "agent_thought": "Response checked. No policy violations detected.",
+    })
+
+    return thoughts
 
 
 # -- LLM Backends ----------------------------------------------------------
@@ -240,6 +401,8 @@ async def handle_request(request: Request, path: str = "chat"):
     session = await get_or_create_session(session_id)
     injection_detected, injection_score = detect_injection(message)
 
+    tool_events: list[dict] = []
+
     if injection_detected:
         llm_response = "I'm sorry, I can't fulfil that request as it goes against my guidelines."
     elif detect_crisis(message):
@@ -248,10 +411,16 @@ async def handle_request(request: Request, path: str = "chat"):
         llm_response = "That's outside my area of expertise."
     else:
         system_prompt = app_config.get("system_prompt", "You are a helpful assistant.")
+        # Enrich with agentic context (tools, memory) if features configured.
+        if _features:
+            system_prompt = build_agentic_context(system_prompt, _features)
         llm_messages = [{"role": "system", "content": system_prompt}]
         llm_messages.extend(session["history"])
         llm_messages.append({"role": "user", "content": message})
         llm_response = await call_llm(llm_messages)
+        # Detect and simulate tool calls in the LLM response.
+        if _features:
+            llm_response, tool_events = process_tool_calls(llm_response, _features)
 
     async with sessions_lock:
         session["history"].append({"role": "user", "content": message})
@@ -262,9 +431,18 @@ async def handle_request(request: Request, path: str = "chat"):
     duration_ms = round((time.time() - request_time) * 1000)
     logger.info(f"SESSION={session_id} TURN={turn}  USER: \"{message[:80]}\"  LLM: \"{llm_response[:80]}\"  {duration_ms}ms")
 
-    write_audit_entry({"timestamp": time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime(request_time)), "session_id": session_id, "prompt": message[:2000], "response": llm_response[:2000], "turn": turn, "duration_ms": duration_ms, "target": app_config.get("target", ""), "backend": app_config.get("backend", "")})
+    write_audit_entry({"timestamp": time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime(request_time)), "session_id": session_id, "prompt": message[:2000], "response": llm_response[:2000], "turn": turn, "duration_ms": duration_ms, "target": app_config.get("target", ""), "backend": app_config.get("backend", ""), "tool_events": tool_events})
 
-    return mapper.build_mock_response(llm_response, session_id)
+    # Build kwargs with agentic metadata if features are active.
+    mock_kwargs: dict = {}
+    if _features:
+        mock_kwargs["agent_thoughts"] = build_agent_thoughts(
+            message, injection_detected, injection_score, tool_events, _features,
+        )
+        if tool_events:
+            mock_kwargs["events"] = tool_events
+
+    return mapper.build_mock_response(llm_response, session_id, **mock_kwargs)
 
 
 @app.get("/health")
@@ -320,6 +498,14 @@ def main():
             logger.info(f"Loaded system prompt from {mock_prompt}")
 
     app_config.update({"target": target_name, "backend": args.backend, "model": model, "port": args.port, "ollama_url": args.ollama_url, "base_url": args.base_url, "system_prompt": system_prompt})
+
+    # Load agentic features (tools, memory) from profile.
+    global _features
+    _features = _load_features(profile)
+    if _features:
+        active = [k for k, v in _features.items() if isinstance(v, dict) and v.get("enabled")]
+        if active:
+            logger.info(f"Agentic features enabled: {', '.join(active)}")
 
     uvicorn.run(app, host="0.0.0.0", port=args.port, log_level="info")
 
