@@ -22,10 +22,10 @@ set -euo pipefail
 
 DAME_DIR="${HOME}/src/deepcyber-airt/dame"
 DASE_DIR="${HOME}/src/deepcyber-airt/dase"
-DATASET="datasets/deepvault_agentic.jsonl"
+DATASET="${DAME_DATASET:-datasets/financial_advisor.jsonl}"
 STRATEGY="crescendo_5"
 HARNESS_URL="http://localhost:8000"
-RESULTS_TAG="scorer-eval"
+RESULTS_TAG="${RESULTS_TAG:-scorer-eval}"
 
 MODE="${1:-all}"  # all | --dame-only | --scorers-only
 
