@@ -9,8 +9,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy harness package (includes gui.py)
 COPY harness/ harness/
 
-# Default profile (Deep Vault Capital -- fictional, works out of the box)
-COPY profiles/default/ profiles/default/
+# Profiles (all built-in profiles shipped with the image)
+COPY profiles/ profiles/
 
 # Expose harness, mock, and GUI ports
 EXPOSE 7860 8000 8089
