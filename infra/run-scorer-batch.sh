@@ -93,7 +93,7 @@ if [ "$MODE" != "--scorers-only" ]; then
 
     log "Running: $model ($STRATEGY)..."
 
-    if inspect eval src/dame/task.py \
+    if inspect eval src/dame/task.py@dame \
       --model "$model" \
       -T target_model=openai/target \
       -T target_base_url="$HARNESS_URL/v1" \
