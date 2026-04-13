@@ -1,0 +1,31 @@
+# =====================================================================
+# Baseline Profile — Minimal target with no guardrails
+# =====================================================================
+#
+# A bare AI assistant with no system prompt hardening, no memory,
+# no tools. Used to establish baseline ASR for attacker comparison.
+# Represents the "unguarded target" condition.
+#
+# Run:
+#   airt-launch baseline
+# =====================================================================
+
+target: example
+display_name: "Baseline (unguarded)"
+
+api:
+  url: "http://localhost:8089"
+  path: "/chat"
+
+auth:
+  mode: none
+
+session:
+  header: x-session-id
+
+mock:
+  url: "http://localhost:8089"
+  backend: echo
+
+harness:
+  port: 8000
