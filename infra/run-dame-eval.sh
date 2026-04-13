@@ -350,7 +350,7 @@ log ""
 log "Model Results:"
 while IFS=, read -r short model samples total duration dataset strategy ts mode; do
   [ "$short" = "model_short" ] && continue
-  local rate=""
+  rate=""
   [ "$total" != "0" ] && [ "$total" != "?" ] && rate=" ($(( samples * 100 / total ))%)"
   log "  $short: ${samples}/${total}${rate} in ${duration}s${mode:+ [$mode]}"
 done < "${RESULTS_DIR}/run_record.csv"
