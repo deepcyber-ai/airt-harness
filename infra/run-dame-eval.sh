@@ -10,11 +10,18 @@
 #   - Automatic run logging
 #
 # Usage:
-#   ./infra/run-dame-eval.sh                              # default: mediguide, all models
+#   ./infra/run-dame-eval.sh                              # default: mediguide, all waves
+#   ./infra/run-dame-eval.sh --wave 1                     # run wave 1 only
+#   ./infra/run-dame-eval.sh --wave 1 --wave 2            # run waves 1 and 2
 #   ./infra/run-dame-eval.sh --profile deepvault-agentic  # different profile
 #   ./infra/run-dame-eval.sh --dataset datasets/custom.jsonl
 #   ./infra/run-dame-eval.sh --models "sonnet gpt41 dolphin"
 #   ./infra/run-dame-eval.sh --tag my-experiment
+#
+# Waves:
+#   1 = Bedrock EU + OpenAI (fast, reliable): Sonnet, Qwen3, GPT-4.1, Magistral
+#   2 = Bedrock US + local (slower): Maverick, Llama 3.3, DeepSeek V3.2, dolphin
+#   3 = Problematic (throttling/individual): Gemini Flash, GPT-OSS 20B, GPT-OSS 120B
 #
 # Prerequisites:
 #   - Harness running with target profile (airt-launch <profile> --env-file ~/.airt-config/.env)
@@ -35,6 +42,7 @@ PROFILE="${PROFILE:-mediguide}"
 DATASET=""
 TAG=""
 MODELS=""
+WAVES=()
 
 # ── Parse arguments ──────────────────────────────────────────────────
 
@@ -44,11 +52,15 @@ while [[ $# -gt 0 ]]; do
     --dataset) DATASET="$2"; shift 2 ;;
     --tag) TAG="$2"; shift 2 ;;
     --models) MODELS="$2"; shift 2 ;;
+    --wave) WAVES+=("$2"); shift 2 ;;
     --strategy) STRATEGY="$2"; shift 2 ;;
     --harness-url) HARNESS_URL="$2"; shift 2 ;;
     *) echo "Unknown option: $1"; exit 1 ;;
   esac
 done
+
+# Default: all waves if none specified
+[ ${#WAVES[@]} -eq 0 ] && WAVES=(1 2 3)
 
 # Default dataset per profile
 if [ -z "$DATASET" ]; then
@@ -288,8 +300,9 @@ while IFS= read -r line; do
 done < <(get_selected_models)
 
 log "Models: ${#SELECTED_MODELS[@]} selected"
+log "Waves: ${WAVES[*]}"
 
-for wave in 1 2 3; do
+for wave in "${WAVES[@]}"; do
   WAVE_MODELS=()
   for entry in "${SELECTED_MODELS[@]}"; do
     local_wave=$(echo "$entry" | cut -d'|' -f3)
