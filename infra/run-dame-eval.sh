@@ -314,9 +314,9 @@ for wave in "${WAVES[@]}"; do
   log "=== Wave $wave (${#WAVE_MODELS[@]} models) ==="
 
   for entry in "${WAVE_MODELS[@]}"; do
-    local model_id=$(echo "$entry" | cut -d'|' -f1)
-    local short=$(echo "$entry" | cut -d'|' -f2)
-    local mode=$(echo "$entry" | cut -d'|' -f4)
+    model_id=$(echo "$entry" | cut -d'|' -f1)
+    short=$(echo "$entry" | cut -d'|' -f2)
+    mode=$(echo "$entry" | cut -d'|' -f4)
 
     mkdir -p "${RESULTS_DIR}/${short}"
 
