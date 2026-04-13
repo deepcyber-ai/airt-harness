@@ -305,7 +305,7 @@ async def call_openai(messages: list[dict], model: str, api_key: str, base_url: 
             try:
                 async with httpx.AsyncClient(timeout=120) as client:
                     resp = await client.post(f"{base_url}/chat/completions", headers={"Authorization": f"Bearer {api_key}"}, json={"model": model, "messages": messages})
-                    if resp.status_code == 429:
+                    if resp.status_code in (429, 503, 502, 500):
                         wait = max(float(resp.headers.get("retry-after", 0)), 2 ** attempt) + random.uniform(0, 1)
                         await asyncio.sleep(wait)
                         continue
@@ -322,14 +322,27 @@ async def call_openai(messages: list[dict], model: str, api_key: str, base_url: 
 async def call_anthropic(messages: list[dict], model: str, api_key: str) -> str:
     system = next((m["content"] for m in messages if m["role"] == "system"), "")
     conv = [m for m in messages if m["role"] != "system"]
-    async with httpx.AsyncClient(timeout=120) as client:
-        resp = await client.post(
-            "https://api.anthropic.com/v1/messages",
-            headers={"x-api-key": api_key, "anthropic-version": "2023-06-01", "Content-Type": "application/json"},
-            json={"model": model, "max_tokens": 1024, "system": system, "messages": conv},
-        )
-        resp.raise_for_status()
-        return resp.json()["content"][0]["text"]
+    async with LLM_SEMAPHORE:
+        for attempt in range(6):
+            try:
+                async with httpx.AsyncClient(timeout=120) as client:
+                    resp = await client.post(
+                        "https://api.anthropic.com/v1/messages",
+                        headers={"x-api-key": api_key, "anthropic-version": "2023-06-01", "Content-Type": "application/json"},
+                        json={"model": model, "max_tokens": 1024, "system": system, "messages": conv},
+                    )
+                    if resp.status_code in (429, 503, 502, 529):
+                        wait = max(float(resp.headers.get("retry-after", 0)), 2 ** attempt) + random.uniform(0, 1)
+                        await asyncio.sleep(wait)
+                        continue
+                    resp.raise_for_status()
+                    return resp.json()["content"][0]["text"]
+            except httpx.RequestError as e:
+                if attempt < 5:
+                    await asyncio.sleep(2 ** attempt + random.uniform(0, 1))
+                else:
+                    return f"[ERROR] LLM backend unavailable: {e}"
+        return "[ERROR] LLM backend rate-limited"
 
 
 # -- LLM Dispatch ----------------------------------------------------------
