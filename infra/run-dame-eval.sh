@@ -69,6 +69,7 @@ if [ -z "$DATASET" ]; then
     deepvault-agentic)  DATASET="datasets/deepvault_agentic.jsonl" ;;
     default)            DATASET="datasets/financial_advisor.jsonl" ;;
     baseline)           DATASET="datasets/financial_advisor.jsonl" ;;
+    rushed)             DATASET="datasets/rushed_owasp.jsonl" ;;
     *) echo "Unknown profile: $PROFILE — specify --dataset"; exit 1 ;;
   esac
 fi
