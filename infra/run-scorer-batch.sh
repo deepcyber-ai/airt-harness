@@ -7,6 +7,7 @@
 #   ./run-scorer-batch.sh --scorers-only     # ingest + panel + score (skip DAME)
 #   ./run-scorer-batch.sh --score-only       # score only (skip DAME, ingest, panel — use existing panels)
 #   ./run-scorer-batch.sh --ingest-only      # ingest DAME results into DASE format only
+#   ./run-scorer-batch.sh --method-a         # Method A: original eval_scorer.py against 30-sample hand-labelled set
 #
 # Prerequisites:
 #   - Harness running: MOCK_BACKEND=gemini airt-launch
@@ -49,12 +50,14 @@ RUN_DAME=true
 RUN_INGEST=true
 RUN_PANEL=true
 RUN_SCORE=true
+RUN_METHOD_A=false
 
 case "$MODE" in
   --dame-only)    RUN_INGEST=false; RUN_PANEL=false; RUN_SCORE=false ;;
   --scorers-only) RUN_DAME=false ;;
   --score-only)   RUN_DAME=false; RUN_INGEST=false; RUN_PANEL=false ;;
   --ingest-only)  RUN_DAME=false; RUN_PANEL=false; RUN_SCORE=false ;;
+  --method-a)     RUN_DAME=false; RUN_INGEST=false; RUN_PANEL=false; RUN_SCORE=false; RUN_METHOD_A=true ;;
   all)            ;; # run everything
   *) err "Unknown mode: $MODE"; exit 1 ;;
 esac
@@ -257,13 +260,30 @@ if $RUN_PANEL; then
   cd "$DASE_DIR"
 
   # Merge all attacker transcripts into a combined dataset for panel scoring.
-  # This gives broader coverage than scoring a single attacker's transcripts.
+  # Filter out hollow samples (empty transcript + empty final_target_response)
+  # which come from interrupted or failed DAME runs.
   COMBINED_DATASET="datasets/$RESULTS_TAG/all_attackers_combined.jsonl"
-  log "Combining attacker transcripts..."
-  cat datasets/$RESULTS_TAG/*_from_dame.jsonl > "$COMBINED_DATASET" 2>/dev/null
+  log "Combining attacker transcripts (filtering hollow samples)..."
+  cat datasets/$RESULTS_TAG/*_from_dame.jsonl 2>/dev/null | \
+    python3 -c "
+import sys, json
+kept, dropped = 0, 0
+for line in sys.stdin:
+    r = json.loads(line)
+    transcript = r.get('transcript', '')
+    ftr = r.get('final_target_response', '')
+    if isinstance(ftr, list):
+        ftr = ' '.join(b.get('text','') for b in ftr if isinstance(b, dict))
+    if transcript.strip() or (isinstance(ftr, str) and len(ftr.strip()) > 50):
+        print(line, end='')
+        kept += 1
+    else:
+        dropped += 1
+print(f'Kept {kept}, dropped {dropped} hollow samples', file=sys.stderr)
+" > "$COMBINED_DATASET"
 
   if [ ! -s "$COMBINED_DATASET" ]; then
-    err "No ingested transcripts found. Run DAME + ingest first."
+    err "No valid transcripts found. Run DAME + ingest first."
     exit 1
   fi
 
@@ -319,6 +339,7 @@ fi
 
 if $RUN_SCORE; then
   # ── Evaluate scorers ────────────────────────────────────────────
+  cd "$DASE_DIR"
 
   log "=== DASE: Evaluating scorers ==="
   mkdir -p "results/$RESULTS_TAG"
@@ -412,6 +433,74 @@ if $RUN_SCORE; then
   done
 
   log "=== DASE complete ==="
+fi
+
+# ── Method A: Original eval_scorer.py against hand-labelled set ───
+
+if $RUN_METHOD_A; then
+  log "=== Method A: eval_scorer.py (30 hand-labelled samples) ==="
+  cd "$DAME_DIR"
+  mkdir -p "results/method-a"
+
+  # All scorer models — uses inspect_ai model IDs
+  METHOD_A_SCORERS=(
+    "bedrock/anthropic.claude-opus-4-6-v1"
+    "bedrock/anthropic.claude-sonnet-4-6"
+    "bedrock/us.meta.llama3-3-70b-instruct-v1:0"
+    "bedrock/us.deepseek.r1-v1:0"
+    "bedrock/qwen.qwen3-235b-a22b-2507-v1:0"
+    "bedrock/mistral.magistral-small-2509"
+  )
+
+  if [ -n "${OPENAI_API_KEY:-}" ]; then
+    METHOD_A_SCORERS+=("openai/gpt-5.4" "openai/gpt-5.4-mini" "openai/gpt-4.1")
+  fi
+  if [ -n "${GOOGLE_API_KEY:-}" ]; then
+    METHOD_A_SCORERS+=("google/gemini-2.5-flash")
+  fi
+
+  METHOD_A_PIDS=()
+  METHOD_A_NAMES=()
+
+  for model in "${METHOD_A_SCORERS[@]}"; do
+    model_short=$(echo "$model" | sed 's|.*/||' | sed 's|:|-|g')
+
+    log "  Launching Method A: $model_short..."
+
+    (
+      python3 scripts/eval_scorer.py \
+        --judge "$model" \
+        --dataset datasets/ground_truth/scorer_test_set.jsonl \
+        > "results/method-a/${model_short}.log" 2>&1
+    ) &
+    METHOD_A_PIDS+=($!)
+    METHOD_A_NAMES+=("$model_short")
+
+    # Respect concurrency limit
+    while [ ${#METHOD_A_PIDS[@]} -ge $MAX_PARALLEL ]; do
+      for i in "${!METHOD_A_PIDS[@]}"; do
+        if ! kill -0 "${METHOD_A_PIDS[$i]}" 2>/dev/null; then
+          wait "${METHOD_A_PIDS[$i]}" 2>/dev/null && \
+            log "  Done: ${METHOD_A_NAMES[$i]}" || \
+            err "  FAILED: ${METHOD_A_NAMES[$i]}"
+          unset 'METHOD_A_PIDS[$i]' 'METHOD_A_NAMES[$i]'
+          METHOD_A_PIDS=("${METHOD_A_PIDS[@]}")
+          METHOD_A_NAMES=("${METHOD_A_NAMES[@]}")
+          break
+        fi
+      done
+      [ ${#METHOD_A_PIDS[@]} -ge $MAX_PARALLEL ] && sleep 2
+    done
+  done
+
+  # Wait for remaining
+  for i in "${!METHOD_A_PIDS[@]}"; do
+    wait "${METHOD_A_PIDS[$i]}" 2>/dev/null && \
+      log "  Done: ${METHOD_A_NAMES[$i]}" || \
+      err "  FAILED: ${METHOD_A_NAMES[$i]}"
+  done
+
+  log "=== Method A complete. Results in $DAME_DIR/results/method-a/ ==="
 fi
 
 echo
