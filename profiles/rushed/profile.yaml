@@ -17,7 +17,7 @@
 # ═══════════════════════════════════════════════════════════════════════
 
 target: example
-display_name: "FinBot (Rushed)"
+display_name: "Money Agent (Rushed)"
 
 api:
   url: "http://localhost:8089"
