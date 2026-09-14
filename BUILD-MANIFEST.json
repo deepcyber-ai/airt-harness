@@ -2,8 +2,8 @@
   "product": "airt-harness",
   "export_manifest_version": "0.3-draft",
   "source_revision": "30642f792da5221b309d2ff1efb8b0524b190558",
-  "built_utc": "2026-09-13T22:19:22Z",
-  "file_count": 72,
+  "built_utc": "2026-09-14T09:50:39Z",
+  "file_count": 81,
   "scanner": {
     "version": "scan_secrets/1.0.0",
     "policy": "export",
@@ -221,6 +221,18 @@
       "dest_sha256": "80e2eaa6b7fbaafadeb51402fe06bf5338fbe31fe235858d43c513afddef8586",
       "transformed": true
     },
+    "profiles/baseline/mock/system_prompt.txt": {
+      "source": "profiles/baseline/mock/system_prompt.txt",
+      "source_sha256": "c8472cd9daed5e7c20aa53689e441e10620a002aacd58686aeac2cb188addb5c",
+      "dest_sha256": "c8472cd9daed5e7c20aa53689e441e10620a002aacd58686aeac2cb188addb5c",
+      "transformed": false
+    },
+    "profiles/baseline/profile.yaml": {
+      "source": "profiles/baseline/profile.yaml",
+      "source_sha256": "3776399bc320d664d92dc2a051ccdb2d5908ff5fd294079ab13d5b331bdaa2bd",
+      "dest_sha256": "3776399bc320d664d92dc2a051ccdb2d5908ff5fd294079ab13d5b331bdaa2bd",
+      "transformed": false
+    },
     "profiles/deepcyber-ctf/README.md": {
       "source": "profiles/deepcyber-ctf/README.md",
       "source_sha256": "2d7794f56ca7930579d1e8c7ea7837826c7471c20902da54eb0c110cc33a9067",
@@ -305,6 +317,18 @@
       "dest_sha256": "ef442e55b409246034eb3d033e66c2bba3d265064da0acfd6da92e43f32b11a1",
       "transformed": false
     },
+    "profiles/deepvault-agentic/mock/system_prompt.txt": {
+      "source": "profiles/deepvault-agentic/mock/system_prompt.txt",
+      "source_sha256": "b41bba11d96b983e990ebe58ae3fb997ba0b5d6636e19d7083b68ec7faa26435",
+      "dest_sha256": "b41bba11d96b983e990ebe58ae3fb997ba0b5d6636e19d7083b68ec7faa26435",
+      "transformed": false
+    },
+    "profiles/deepvault-agentic/profile.yaml": {
+      "source": "profiles/deepvault-agentic/profile.yaml",
+      "source_sha256": "2c770de0e894c5bb3fbc181fcbe09a55996618b378cc14b12fed45865aea7c4d",
+      "dest_sha256": "2c770de0e894c5bb3fbc181fcbe09a55996618b378cc14b12fed45865aea7c4d",
+      "transformed": false
+    },
     "profiles/deepvault-capital/extension.py": {
       "source": "profiles/deepvault-capital/extension.py",
       "source_sha256": "e4dcc526d75b1cbcbfd6a518535ae5c04016f4620d082792b461c50e562f2a02",
@@ -369,6 +393,36 @@
       "source": "profiles/default/profile.yaml",
       "source_sha256": "cf8846fad24e9f72855070ca1c8a6d84e0f6bc304f083d0553ac0d4307eac0c9",
       "dest_sha256": "cf8846fad24e9f72855070ca1c8a6d84e0f6bc304f083d0553ac0d4307eac0c9",
+      "transformed": false
+    },
+    "profiles/mediguide/README.md": {
+      "source": "profiles/mediguide/README.md",
+      "source_sha256": "ee31b6445f5361188b4494c6a4b6f3294ad7b08675021d40818ac024bdaac47c",
+      "dest_sha256": "ee31b6445f5361188b4494c6a4b6f3294ad7b08675021d40818ac024bdaac47c",
+      "transformed": false
+    },
+    "profiles/mediguide/mock/system_prompt.txt": {
+      "source": "profiles/mediguide/mock/system_prompt.txt",
+      "source_sha256": "2205502d7355bd061d5e0eb2a32c067e832a5abcf854d8d378273c59496e359d",
+      "dest_sha256": "2205502d7355bd061d5e0eb2a32c067e832a5abcf854d8d378273c59496e359d",
+      "transformed": false
+    },
+    "profiles/mediguide/profile.yaml": {
+      "source": "profiles/mediguide/profile.yaml",
+      "source_sha256": "d09b8b7bb77b93bfe0e471aae914a2b67540a31c67104fe446c28ae03ddcdf41",
+      "dest_sha256": "d09b8b7bb77b93bfe0e471aae914a2b67540a31c67104fe446c28ae03ddcdf41",
+      "transformed": false
+    },
+    "profiles/rushed/mock/system_prompt.txt": {
+      "source": "profiles/rushed/mock/system_prompt.txt",
+      "source_sha256": "16c9761684169aa3ab89dff18b00f0e43b16f6a657999dd98f55e56cbe3683e0",
+      "dest_sha256": "16c9761684169aa3ab89dff18b00f0e43b16f6a657999dd98f55e56cbe3683e0",
+      "transformed": false
+    },
+    "profiles/rushed/profile.yaml": {
+      "source": "profiles/rushed/profile.yaml",
+      "source_sha256": "df79904219e3f76933c121047f5e83ad2e3bd82a1ed95d5057703f4a4859a856",
+      "dest_sha256": "df79904219e3f76933c121047f5e83ad2e3bd82a1ed95d5057703f4a4859a856",
       "transformed": false
     },
     "pyproject.toml": {
