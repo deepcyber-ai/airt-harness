@@ -1,0 +1,98 @@
+# airt-harness model catalogue (ai-models format) — portable template.
+#
+# Profiles opt in with `mock.models_file: ../../models.yaml`; this file is the
+# shipped models.yaml. Bring your own credentials: set a provider key in .env, or
+# configure AWS for the Bedrock models (see MODELS-SETUP.md). Only models whose
+# credential is present are offered at runtime.
+#
+# default_model is the one that answers first. If it has no credential, the harness
+# falls back to the first model below that does — so with only an OpenAI key you start
+# on gpt-4.1, and with only Bedrock access you fall through to qwen.
+
+default_model: gpt-4.1
+
+models:
+  # OpenAI (bring OPENAI_API_KEY)
+  gpt-4.1:
+    type: openai-compatible
+    base_url: https://api.openai.com/v1
+    model: gpt-4.1
+    api_key_env: OPENAI_API_KEY
+
+  gpt-4o-mini:
+    type: openai-compatible
+    base_url: https://api.openai.com/v1
+    model: gpt-4o-mini
+    api_key_env: OPENAI_API_KEY
+
+  # Google Gemini (bring GEMINI_API_KEY)
+  gemini-flash:
+    type: openai-compatible
+    base_url: https://generativelanguage.googleapis.com/v1beta/openai
+    model: gemini-2.5-flash
+    api_key_env: GEMINI_API_KEY
+
+  # AWS Bedrock (bring your own Bedrock access; enable the model in your account,
+  # region eu-west-2). No key in .env — configure AWS credentials instead.
+  qwen:
+    type: aws-bedrock
+    model: qwen.qwen3-235b-a22b-2507-v1:0
+    region: eu-west-2
+
+  bedrock-sonnet:
+    type: aws-bedrock
+    model: eu.anthropic.claude-sonnet-5
+    region: eu-west-2
+
+  mistral:
+    type: aws-bedrock
+    model: mistral.mistral-large-2402-v1:0
+    region: eu-west-2
+
+  deepseek:
+    type: aws-bedrock
+    model: deepseek.v3.2
+    region: eu-west-2
+
+  llama:
+    type: aws-bedrock
+    model: meta.llama3-70b-instruct-v1:0
+    region: eu-west-2
+
+  gpt-oss-120b:
+    type: aws-bedrock
+    model: openai.gpt-oss-120b-1:0
+    region: eu-west-2
+
+  gpt-oss-safeguard-120b:
+    type: aws-bedrock
+    model: openai.gpt-oss-safeguard-120b
+    region: eu-west-2
+
+  gpt-oss-20b:
+    type: aws-bedrock
+    model: openai.gpt-oss-20b-1:0
+    region: eu-west-2
+
+  qwen3-32b:
+    type: aws-bedrock
+    model: qwen.qwen3-32b-v1:0
+    region: eu-west-2
+
+  gpt5.6-terra:
+    type: aws-bedrock
+    model: global.openai.gpt-5.6-terra
+    region: eu-west-2
+
+  # These two need a self-hosted / third-party endpoint + key. Set the endpoint
+  # and the API key before use; leave them blank if you are not using them.
+  glm:
+    type: fireworks
+    model: accounts/fireworks/models/glm-5p2
+    api_key_env: FIREWORKS_API_KEY          # supply your own key
+
+  qwen-uncensored:
+    type: openai-compatible
+    base_url: https://api.runpod.ai/v2/<RUNPOD_ENDPOINT_ID>/openai/v1   # replace with your endpoint
+    model: qwen3-uncensored
+    api_key_env: RUNPOD_API_KEY             # supply your own key

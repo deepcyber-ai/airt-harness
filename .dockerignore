@@ -1,0 +1,50 @@
+# Keep the Docker build context clean. The Dockerfile does `COPY profiles/ profiles/`,
+# which would otherwise ship generated state, course notes and research into the image.
+# For a release, build from the clean export (export/build_export.py); this is the belt.
+
+# --- WIP / research / campaign areas (never in the product image) ---
+results/
+evals-to-review/
+reviews/
+bounded-oracles/
+internal/
+notes/
+decks/
+labs/
+labs-ctf/
+export/
+*.md.bak
+
+# --- generated state that accumulates inside profiles/ ---
+**/__pycache__/
+**/*.pyc
+**/*.log
+**/mock-audit*.jsonl
+**/*.local-*
+**/*.bak
+**/*.sqlite
+**/*.db
+**/*.sqlite-journal
+
+# --- course / research files that live inside shipped profile dirs ---
+**/MODULE*.md
+**/*-RECORD.md
+**/CTF-SUMMARY.md
+**/FINDINGS.md
+**/HIGHLIGHTS.md
+profiles/*/classroom.py
+profiles/*/llm08-exercise/
+profiles/*/notes/
+profiles/*/proposal*.md
+
+# --- profiles that are not supported targets in the first release ---
+profiles/investigations/
+
+# --- secrets / local / vcs / scratch ---
+.env
+.env.*
+.git/
+.venv/
+venv/
+*.pem
+INSTALL-KALI.md

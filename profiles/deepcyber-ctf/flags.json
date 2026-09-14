@@ -1,0 +1,86 @@
+{
+  "_comment": [
+    "Flag identifiers and the line shown beside each one. Edit freely \u2014 the",
+    "extension reads this at start-up and nothing here is compiled in.",
+    "",
+    "  flag         what the learner sees as the identifier",
+    "  owasp        the 2025 category, for reporting",
+    "  group        a coarser grouping, for reporting only",
+    "  description  the line beside it; say what HAPPENED, not what was",
+    "               attempted, because that is what the flag was awarded for",
+    "",
+    "Removing a key does not disable the flag; it only removes the label, and",
+    "the identifier falls back to the key itself. A malformed file is ignored",
+    "with a warning rather than stopping the lab.",
+    "",
+    "LLM08 (vector and embedding weaknesses) is not covered by this profile."
+  ],
+  "flags": {
+    "llm01_direct_injection": {
+      "flag": "OWASP{llm01_direct_injection}",
+      "owasp": "LLM01",
+      "group": "injection",
+      "description": "an injected persona took hold: the assistant left its support role and wrote code"
+    },
+    "llm01_indirect_injection": {
+      "flag": "OWASP{llm01_indirect_injection}",
+      "owasp": "LLM01",
+      "group": "injection",
+      "description": "the assistant obeyed an instruction hidden in a document it retrieved \u2014 you never typed the payload"
+    },
+    "llm01_filter_bypass": {
+      "flag": "OWASP{llm01_filter_bypass}",
+      "owasp": "LLM01",
+      "group": "injection",
+      "description": "you were blocked by the input filter, then got through it \u2014 the filter matches words, not meaning"
+    },
+    "llm02_pii_disclosure": {
+      "flag": "OWASP{llm02_pii_disclosure}",
+      "owasp": "LLM02",
+      "group": "disclosure",
+      "description": "another customer's personal details reached the person you were talking to"
+    },
+    "llm03_supply_chain": {
+      "flag": "OWASP{llm03_supply_chain}",
+      "owasp": "LLM03",
+      "group": "supply-chain",
+      "description": "a poisoned third-party tool description made the assistant leak in bulk \u2014 nothing in the chat looked like an attack"
+    },
+    "llm04_data_poisoning": {
+      "flag": "OWASP{llm04_data_poisoning}",
+      "owasp": "LLM04",
+      "group": "integrity",
+      "description": "a record the assistant quotes back as fact was altered \u2014 the next person to ask gets your answer"
+    },
+    "llm05_improper_output": {
+      "flag": "OWASP{llm05_improper_output}",
+      "owasp": "LLM05",
+      "group": "output-handling",
+      "description": "unsafe content reached something that acts on it: executable markup, or input that entered the query as code"
+    },
+    "llm06_excessive_agency": {
+      "flag": "OWASP{llm06_excessive_agency}",
+      "owasp": "LLM06",
+      "group": "agency",
+      "description": "a destructive action executed with no authorisation step in front of it"
+    },
+    "llm07_system_prompt": {
+      "flag": "OWASP{llm07_system_prompt}",
+      "owasp": "LLM07",
+      "group": "disclosure",
+      "description": "the assistant disclosed its own configuration, including the internal reference"
+    },
+    "llm09_misinformation": {
+      "flag": "OWASP{llm09_misinformation}",
+      "owasp": "LLM09",
+      "group": "integrity",
+      "description": "the assistant stated something its own knowledge base contradicts, or invented specifics for a product with no record"
+    },
+    "llm10_unbounded": {
+      "flag": "OWASP{llm10_unbounded}",
+      "owasp": "LLM10",
+      "group": "availability",
+      "description": "a query cost far more than it returned \u2014 capping rows is no defence against cost"
+    }
+  }
+}
