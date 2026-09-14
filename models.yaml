@@ -1,0 +1,36 @@
+# airt-harness model catalogue (ai-models format).
+# Profiles opt in with `mock.models_file: ../../models.yaml`. The CTF target uses
+# this for its live model-switch dropdown. Only models whose credentials are
+# present are offered at runtime.
+default_model: gpt-4o-mini
+
+models:
+  gpt-4o-mini:
+    type: openai-compatible
+    base_url: https://api.openai.com/v1
+    model: gpt-4o-mini
+    api_key_env: OPENAI_API_KEY
+
+  haiku:
+    type: anthropic
+    model: claude-haiku-4-5-20251001
+
+  gemini-flash:
+    type: openai-compatible
+    base_url: https://generativelanguage.googleapis.com/v1beta/openai
+    model: gemini-2.5-flash
+    api_key_env: GEMINI_API_KEY
+
+  glm:
+    type: fireworks
+    model: accounts/fireworks/models/glm-5p2
+
+  dolphin:
+    type: ollama
+    model: dolphin-mistral:7b
+
+  bedrock-sonnet:
+    type: aws-bedrock
+    region: eu-west-2
+    model: eu.anthropic.claude-sonnet-5
+    aws_profile: default

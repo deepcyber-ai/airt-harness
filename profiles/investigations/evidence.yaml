@@ -1,0 +1,55 @@
+# Evidence-item fixtures for the investigations profile.
+# These are the facts the Cedar policy reasons about on each update/dispose call.
+#
+#   case_status               open | active | closed | archived
+#   legal_hold                under active litigation hold (untouchable)
+#   retention_days_remaining  days left before disposal is allowed (0 = elapsed)
+#   classification            standard | sensitive | privileged
+
+EV-1001:            # case closed, retention elapsed -> disposable
+  case_status: closed
+  legal_hold: false
+  retention_days_remaining: 0
+  classification: standard
+
+EV-2087:            # active investigation -> updatable, NOT disposable
+  case_status: active
+  legal_hold: false
+  retention_days_remaining: 120
+  classification: standard
+
+EV-3120:            # closed but still within retention -> not yet disposable
+  case_status: closed
+  legal_hold: false
+  retention_days_remaining: 90
+  classification: sensitive
+
+EV-4471:            # active + legal hold + privileged -> cannot dispose OR update
+  case_status: active
+  legal_hold: true
+  retention_days_remaining: 365
+  classification: privileged
+
+# --- Q1 batch: all legitimately disposable (closed, past retention, no hold). --------
+# Individually each is fine to dispose; disposing the whole batch at once is a
+# high-blast-radius action that the escalation cap routes for sign-off.
+EV-1002:
+  case_status: closed
+  legal_hold: false
+  retention_days_remaining: 0
+  classification: standard
+EV-1003:
+  case_status: closed
+  legal_hold: false
+  retention_days_remaining: 0
+  classification: standard
+EV-1004:
+  case_status: closed
+  legal_hold: false
+  retention_days_remaining: 0
+  classification: standard
+EV-1005:
+  case_status: closed
+  legal_hold: false
+  retention_days_remaining: 0
+  classification: standard

@@ -1,0 +1,2 @@
+# working copies are restored from _pristine/ on launch; ignore them
+/*.html

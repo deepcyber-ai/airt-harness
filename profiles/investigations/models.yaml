@@ -1,0 +1,71 @@
+# DeepTrace Investigations — self-contained model catalogue (ai-models format).
+# The profile points here via `mock.models_file: models.yaml`, so the demo doesn't
+# depend on the shared repo catalogue. Only models whose credentials are present at
+# runtime are offered in the GUI dropdown / eval.
+#
+# EU (Bedrock eu-west-2): haiku, bedrock-sonnet, qwen, mistral, deepseek, llama
+# US: gpt-4.1, gpt-4o-mini, gemini-flash, glm   ·   local: dolphin
+default_model: gpt-4.1
+
+models:
+  gpt-4.1:
+    type: openai-compatible
+    base_url: https://api.openai.com/v1
+    model: gpt-4.1
+    api_key_env: OPENAI_API_KEY
+
+  gpt-4o-mini:
+    type: openai-compatible
+    base_url: https://api.openai.com/v1
+    model: gpt-4o-mini
+    api_key_env: OPENAI_API_KEY
+
+  gemini-flash:
+    type: openai-compatible
+    base_url: https://generativelanguage.googleapis.com/v1beta/openai
+    model: gemini-2.5-flash
+    api_key_env: GEMINI_API_KEY
+
+  glm:
+    type: fireworks
+    model: accounts/fireworks/models/glm-5p2
+
+  dolphin:
+    type: ollama
+    model: dolphin-mistral:7b
+
+  haiku:
+    type: aws-bedrock
+    region: eu-west-2
+    model: eu.anthropic.claude-haiku-4-5-20251001-v1:0
+    aws_profile: default
+
+  bedrock-sonnet:
+    type: aws-bedrock
+    region: eu-west-2
+    model: eu.anthropic.claude-sonnet-5
+    aws_profile: default
+
+  qwen:
+    type: aws-bedrock
+    region: eu-west-2
+    model: qwen.qwen3-235b-a22b-2507-v1:0
+    aws_profile: default
+
+  mistral:
+    type: aws-bedrock
+    region: eu-west-2
+    model: mistral.mistral-large-2402-v1:0
+    aws_profile: default
+
+  deepseek:
+    type: aws-bedrock
+    region: eu-west-2
+    model: deepseek.v3.2
+    aws_profile: default
+
+  llama:
+    type: aws-bedrock
+    region: eu-west-2
+    model: meta.llama3-70b-instruct-v1:0
+    aws_profile: default

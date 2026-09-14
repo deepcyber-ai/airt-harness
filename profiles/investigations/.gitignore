@@ -1,0 +1,4 @@
+# The repo-wide *.jsonl rule would hide these — but the attack suites are source,
+# not runtime logs. Re-include them (mock-audit.jsonl stays ignored).
+!attacks_crude.jsonl
+!attacks_subtle.jsonl
