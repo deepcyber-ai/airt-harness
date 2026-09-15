@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Why AIRT Harness</title>
+<style>
+  :root{
+    --bg:#f6f8fb; --surface:#ffffff; --text:#131a26; --muted:#586274;
+    --accent:#2563eb; --accent-soft:#dbe6ff; --border:#e4e8ef;
+    --code-bg:#0d1220; --code-text:#e6edf3; --code-comment:#7ee787; --code-string:#a5d6ff; --code-accent:#79c0ff;
+    --radius:10px; --maxw:74ch;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,"SF Mono","Cascadia Code","JetBrains Mono",Consolas,monospace;
+  }
+  @media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){
+    --bg:#0c0f14; --surface:#141922; --text:#e6edf3; --muted:#9aa6b8; --accent:#5aa0ff; --accent-soft:#17263f; --border:#232b38; --code-bg:#0a0d13;
+  }}
+  :root[data-theme="dark"]{ --bg:#0c0f14; --surface:#141922; --text:#e6edf3; --muted:#9aa6b8; --accent:#5aa0ff; --accent-soft:#17263f; --border:#232b38; --code-bg:#0a0d13; }
+  *{box-sizing:border-box}
+  body{background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.62;font-size:16px;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:900px;margin:0 auto;padding:0 22px 96px}
+  .back{display:inline-block;margin:26px 0 0;font-family:var(--mono);font-size:.82rem;color:var(--accent)}
+  header.hero{padding:6px 0 18px;border-bottom:1px solid var(--border);margin-bottom:18px}
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);font-weight:600;margin:0 0 10px}
+  h1{font-size:2.5rem;line-height:1.08;margin:0 0 12px;letter-spacing:-.02em;font-weight:800;text-wrap:balance}
+  h1 .blue{color:var(--accent)}
+  .lede{font-size:1.13rem;color:var(--muted);max-width:var(--maxw);margin:0}
+  section{margin:0 0 30px}
+  h2{font-size:1.5rem;margin:0 0 14px;letter-spacing:-.01em;font-weight:750;padding-top:14px;border-top:1px solid var(--border)}
+  section:first-of-type h2{border-top:none;padding-top:2px}
+  h3{font-size:1.12rem;margin:24px 0 6px;font-weight:700}
+  p{max-width:var(--maxw)}
+  a{color:var(--accent);text-decoration:none} a:hover{text-decoration:underline}
+  code:not(pre code){font-family:var(--mono);font-size:.87em;background:var(--accent-soft);color:var(--text);padding:.1em .38em;border-radius:5px;border:1px solid var(--border)}
+  pre{background:var(--code-bg);color:var(--code-text);border-radius:var(--radius);padding:16px 18px;overflow-x:auto;font-family:var(--mono);font-size:.85rem;line-height:1.6;margin:12px 0 0;border:1px solid #1c2433}
+  pre .c{color:var(--code-comment)} pre .s{color:var(--code-string)} pre .k{color:var(--code-accent)}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(238px,1fr));gap:13px;margin:18px 0}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:15px 17px}
+  .card h4{margin:0 0 5px;font-size:.98rem;color:var(--accent)}
+  .card p{margin:0;font-size:.9rem;color:var(--muted);max-width:none}
+  .diagram{background:var(--code-bg);color:var(--code-text);border-radius:var(--radius);padding:20px 18px;overflow-x:auto;font-family:var(--mono);font-size:.82rem;line-height:1.5;border:1px solid #1c2433}
+  .diagram .lbl{color:var(--code-accent)} .diagram .c{color:var(--code-comment)}
+  .foot{margin-top:54px;padding-top:20px;border-top:1px solid var(--border);color:var(--muted);font-size:.9rem}
+</style>
+</head>
+<body>
+<div class="wrap">
+<a class="back" href="getting-started.html">← Getting Started</a>
+<header class="hero">
+  <p class="kicker">Deep Cyber · AI Red Teaming Framework</p>
+  <h1>Why <span class="blue">AIRT Harness</span></h1>
+  <p class="lede">One canonical API in front of any target, so every red-teaming tool, every model, and
+  every CTF profile speaks the same wire format and produces the same evidence. Develop against a local
+  mock, then flip to a live API with one environment variable.</p>
+</header>
+
+<section>
+  <h2>Architecture</h2>
+  <div class="diagram">
+  red-team tool ─┐
+  your curl      ├──►  <span class="lbl">CANONICAL PROXY</span>  ──►  <span class="lbl">TARGET</span>
+  PyRIT / promptfoo ┘   harness.server           <span class="c"># a local MOCK (a profile), or</span>
+                        :8000                     <span class="c"># a real LLM API (OpenAI, Gemini,</span>
+                        /v1/chat/completions      <span class="c">#   Bedrock, Ollama …) - swapped</span>
+                        /chat                     <span class="c">#   in by one env var</span>
+                        + sessions, firewall,     <span class="lbl">MOCK</span> = harness.mock (:8080)
+                          recording, replay
+  </div>
+  <p><b>Canonical proxy</b> (<code>harness/server.py</code>, port <code>8000</code>) exposes an
+  OpenAI-compatible <code>/v1/chat/completions</code> <em>and</em> a simplified <code>/chat</code>.
+  Message mappers translate between the canonical format and whatever the target speaks. The <b>target</b>
+  is either a <b>mock</b> (a profile's deliberately-vulnerable app) or a <b>real API</b> - same proxy,
+  same evidence, either way.</p>
+  <div class="cards">
+    <div class="card"><h4>One canonical API</h4><p>Every tool hits the same <code>/v1/chat/completions</code> - no per-target glue.</p></div>
+    <div class="card"><h4>Standardised evidence</h4><p>Every request/response captured as JSONL with a tamper-evident audit trail.</p></div>
+    <div class="card"><h4>Profiles + local mocks</h4><p>Develop and rehearse without burning target budget or hitting a live system.</p></div>
+    <div class="card"><h4>Mock ⇄ live switch</h4><p>Flip from mock to the real API with one env var. Cloud, on-prem or local.</p></div>
+    <div class="card"><h4>Broad model support</h4><p>OpenAI, Anthropic, Gemini, Bedrock, Ollama, and <code>echo</code>.</p></div>
+    <div class="card"><h4>Docker-native, open source</h4><p>Single container, no host Python needed.</p></div>
+  </div>
+</section>
+
+<section>
+  <h2>What you get</h2>
+  <p><b>Profiles.</b> A profile is a <code>profile.yaml</code> declaring a target: identity, endpoint,
+  request/response mapping, auth, session handling, an optional policy, and (for a mock) the app's
+  behaviour. Switching targets is switching profiles.</p>
+
+  <p><b>The canonical, OpenAI-compatible endpoint.</b> Point any OpenAI-compatible client at
+  <code>:8000/v1/chat/completions</code> (or the simpler <code>/chat</code>):</p>
+  <pre><span class="k">curl</span> -X POST http://localhost:8000/chat -H <span class="s">"Content-Type: application/json"</span> \
+  -d <span class="s">'{"input": "What is an ISA?"}'</span></pre>
+
+  <p><b>Sessions.</b> Multi-turn conversations are kept per session with the <code>x-session-id</code>
+  header - this is what lets multi-turn attacks (PAIR/TAP/GOAT/Crescendo) hold a conversation.</p>
+
+  <p><b>Model switching.</b> The mock is backed by a real model from the catalogue - swap it live with
+  <code>POST /model</code> or the GUI dropdown, or set it at launch with <code>MOCK_BACKEND</code>
+  (<code>echo</code>, <code>openai</code>, <code>gemini</code>, <code>bedrock</code>, <code>ollama</code>).</p>
+
+  <p><b>Integrated guardrails (HumanBound firewall).</b> A guardrail sits in front of the target, off by
+  default - toggle it at runtime and run the same attacks off, then on:</p>
+  <pre><span class="k">curl</span> -X POST http://localhost:8000/firewall -d <span class="s">'{"enabled": true}'</span></pre>
+
+  <p><b>Recording.</b> Every request/response is captured to JSONL (<code>mock-audit.jsonl</code>) - the
+  standardised evidence every tool then shares.</p>
+
+  <p><b>Replay.</b> <code>airt-replay</code> re-runs recorded sessions against the <em>current</em> target
+  - regression testing on the same API, with an optional LLM-judge score per turn. A/B the firewall, catch
+  silent guardrail drift in CI, feed findings into posture management / AI SecOps.</p>
+  <pre>airt-replay profiles/default/intel/ --session abc123 -o results/replay.md</pre>
+</section>
+
+<p class="foot">Deep Cyber AI Red Teaming Framework. Synthetic targets and data throughout; authorised
+testing only. &nbsp;·&nbsp; <a href="getting-started.html">← back to Getting Started</a></p>
+</div>
+</body>
+</html>
