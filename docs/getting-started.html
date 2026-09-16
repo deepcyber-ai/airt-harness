@@ -126,19 +126,22 @@
   <details style="margin-top:16px">
     <summary style="cursor:pointer;color:var(--accent);font-size:.92rem">Appendix: the manual four-process recipe (what <code>airt-target</code> runs)</summary>
     <p style="font-size:.9rem;color:var(--muted);margin-top:10px">If you want to see the parts, bring a
-    target up by hand. Run one CTF target at a time on <code>:8080</code>; governance runs from its own
-    checkout as the working directory.</p>
-    <pre><span class="c"># Larkfield</span>
+    target up by hand. Use each target's own ports (below), so two can run at once; governance runs from
+    its own checkout as the working directory. <b>This starts only the tool server and the target</b> -
+    the API (<code>harness.server</code>) and GUI are the other two layers, and <code>airt-target</code>
+    starts all four. The profile picks its model from the catalogue, so with no key in <code>.env</code>
+    it answers on <code>echo</code> and fires no flag (see the credentials note above).</p>
+    <pre><span class="c"># Larkfield  (target 8080)</span>
 cd /opt/airt/src/airt_harness
 python profiles/deepcyber-ctf/vendor/larkfield-db-mcp/server.py --port 8200 --version 1.0.2 &amp;
 python -m harness.mock --profile profiles/deepcyber-ctf/profile.yaml --port 8080
 
-<span class="c"># Deep Vault Capital (hardened: add --system-prompt profiles/deepvault-capital/mock/system_prompt_hardened.txt)</span>
+<span class="c"># Deep Vault Capital  (target 8081 - NOT 8080; hardened: add --system-prompt profiles/deepvault-capital/mock/system_prompt_hardened.txt)</span>
 cd /opt/airt/src/airt_harness
 python profiles/deepvault-capital/vendor/dvc-db-mcp/server.py --port 8210 &amp;
-python -m harness.mock --profile profiles/deepvault-capital/profile.yaml --port 8080
+python -m harness.mock --profile profiles/deepvault-capital/profile.yaml --port 8081
 
-<span class="c"># Investigations (governance) - its own checkout as cwd</span>
+<span class="c"># Investigations (governance)  (target 8091) - its own checkout as cwd</span>
 cd /opt/airt/src/airt_governance
 python -m harness.mock --profile profiles/investigations/profile.yaml --port 8091</pre>
   </details>
