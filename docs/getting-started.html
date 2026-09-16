@@ -84,7 +84,7 @@
 
   <pre><span class="k">airt-target</span> larkfield      <span class="c"># Larkfield Assistant (DeepCyber CTF)</span>
 <span class="k">airt-target</span> moneyagent     <span class="c"># Money Agent (Deep Vault Capital CTF)</span>
-<span class="k">airt-target</span> governance     <span class="c"># Investigations (the agentic governance rung)</span>
+<span class="k">airt-target</span> governance     <span class="c"># Investigations (the agentic runtime governance demo)</span>
 <span class="k">airt-target</span> status         <span class="c"># what is running, and on which ports</span>
 <span class="k">airt-target</span> stop [name]    <span class="c"># stop one target (or all, with no name)</span></pre>
 
@@ -129,7 +129,7 @@
   present. Add a key first: copy <code>.env.example</code> to <code>.env</code> (on the VM the active
   <code>.env</code> is <code>/opt/airt/src/.env</code>, one level above both checkouts - do not add a
   second one deeper in the tree, it would shadow it) and set one provider (<code>OPENAI_API_KEY</code>,
-  or an AWS profile for Bedrock) as <code>MODELS-SETUP.md</code> describes, then select that model with
+  or an AWS profile for Bedrock) as <a href="configuring-models.html">Configuring &amp; testing your models</a> describes, then select that model with
   the GUI dropdown or <code>POST /model</code>. <code>airt-target</code> prints the selected model and how
   many catalogue models have credentials (and names <code>/opt/airt/src/.env</code> when none do).</div>
 
@@ -200,8 +200,8 @@ airt-replay profiles/default/intel/ --session abc123 -o results/replay.md</pre><
 
 <section>
   <h2>Next</h2>
-  <p><b>MODELS-SETUP.md</b> - add your OpenAI or Bedrock key and test a model &nbsp;·&nbsp; each profile's
-  <b>README</b> - its flags &nbsp;·&nbsp; <a
+  <p><a href="configuring-models.html"><b>Configuring &amp; testing your models</b></a> - add a key,
+  switch models, and test &nbsp;·&nbsp; each profile's <b>README</b> - its flags &nbsp;·&nbsp; <a
   href="why-airt-harness.html">Why AIRT Harness</a>.</p>
   <p style="font-size:.9rem;color:var(--muted)">The two-model labs (attacker + scorer) come with the
   <b>course materials</b>, not this freshly-booted image: once you have them, <code>labs/CHOOSING-MODELS.md</code>

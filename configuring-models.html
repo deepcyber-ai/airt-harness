@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Configuring &amp; Testing Your Models</title>
+<style>
+  :root{
+    --bg:#f6f8fb; --surface:#ffffff; --text:#131a26; --muted:#586274;
+    --accent:#2563eb; --accent-soft:#dbe6ff; --border:#e4e8ef;
+    --code-bg:#0d1220; --code-text:#e6edf3; --code-comment:#7ee787; --code-string:#a5d6ff; --code-accent:#79c0ff;
+    --radius:10px; --maxw:72ch;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,"SF Mono","Cascadia Code","JetBrains Mono",Consolas,monospace;
+  }
+  @media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){
+    --bg:#0c0f14; --surface:#141922; --text:#e6edf3; --muted:#9aa6b8; --accent:#5aa0ff; --accent-soft:#17263f; --border:#232b38; --code-bg:#0a0d13;
+  }}
+  :root[data-theme="dark"]{ --bg:#0c0f14; --surface:#141922; --text:#e6edf3; --muted:#9aa6b8; --accent:#5aa0ff; --accent-soft:#17263f; --border:#232b38; --code-bg:#0a0d13; }
+  *{box-sizing:border-box}
+  body{background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.6;font-size:16px;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:820px;margin:0 auto;padding:0 22px 90px}
+  header.hero{padding:40px 0 18px;border-bottom:1px solid var(--border);margin-bottom:18px}
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);font-weight:600;margin:0 0 10px}
+  h1{font-size:2.4rem;line-height:1.08;margin:0 0 12px;letter-spacing:-.02em;font-weight:800}
+  h1 .blue{color:var(--accent)}
+  .lede{font-size:1.1rem;color:var(--muted);max-width:var(--maxw);margin:0}
+  .vmnote{margin-top:20px;background:var(--accent-soft);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:var(--radius);padding:12px 16px;font-size:.92rem}
+  .vmnote b{color:var(--text)}
+  .whybar{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;
+    background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:13px 17px;margin:0 0 22px}
+  .whybar span{color:var(--muted);font-size:.95rem}
+  .whybar a{display:inline-block;background:var(--accent);color:#fff;padding:.5em 1em;border-radius:8px;font-weight:600;font-size:.92rem;white-space:nowrap}
+  .whybar a:hover{text-decoration:none;filter:brightness(1.08)}
+  section{margin:0 0 26px}
+  h2{font-size:1.4rem;margin:0 0 6px;font-weight:750;letter-spacing:-.01em}
+  .sub{color:var(--muted);margin:0 0 16px;font-size:.97rem}
+  h3{font-size:1.08rem;margin:0 0 4px;font-weight:700;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+  .pill{font-family:var(--mono);font-size:.7rem;background:var(--accent);color:#fff;padding:.15em .5em;border-radius:20px;font-weight:600}
+  .block{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;margin:16px 0}
+  .block p{margin:.4em 0 0;color:var(--muted);font-size:.92rem;max-width:none}
+  pre{background:var(--code-bg);color:var(--code-text);border-radius:8px;padding:15px 16px;overflow-x:auto;font-family:var(--mono);font-size:.85rem;line-height:1.62;margin:12px 0 0;border:1px solid #1c2433}
+  pre .c{color:var(--code-comment)} pre .s{color:var(--code-string)} pre .k{color:var(--code-accent)}
+  p{max-width:var(--maxw)}
+  a{color:var(--accent);text-decoration:none} a:hover{text-decoration:underline}
+  code:not(pre code){font-family:var(--mono);font-size:.87em;background:var(--accent-soft);color:var(--text);padding:.1em .38em;border-radius:5px;border:1px solid var(--border)}
+  table{border-collapse:collapse;width:100%;margin:8px 0 0;font-size:.9rem;display:block;overflow-x:auto}
+  th,td{border:1px solid var(--border);padding:8px 11px;text-align:left;vertical-align:top}
+  th{background:var(--accent-soft);font-weight:650;white-space:nowrap}
+  .foot{margin-top:50px;padding-top:18px;border-top:1px solid var(--border);color:var(--muted);font-size:.88rem}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="hero">
+  <p class="kicker">Deep Cyber · AI Red Teaming Framework</p>
+  <h1>Configuring &amp; testing your <span class="blue">models</span></h1>
+  <p class="lede">The targets are driven by a real LLM behind the scenes. You choose which
+  model that is and supply the credentials. This page gets you from "no keys" to a model
+  answering — and shows how to switch, add, and test models.</p>
+  <div class="vmnote">🔑 <b>You need a credential for at least one provider.</b> Models are
+  defined in <code>/opt/airt/src/airt_harness/models.yaml</code> and selected via the GUI or
+  the API. To use a model you first <b>enable</b> it by providing its credential. We
+  recommend an <b>OpenAI or Gemini key</b> and, ideally, an <b>AWS account</b>.</div>
+</header>
+
+<div class="whybar">
+  <span>New to the framework, or need the targets and ports first? Start with Getting Started.</span>
+  <a href="getting-started.html">← Getting Started</a>
+</div>
+
+<section>
+  <h2>Which models, and which credential</h2>
+  <p class="sub">These are already in the catalogue; each needs the credential shown to be enabled.</p>
+  <table>
+    <tr><th>Model(s)</th><th>Credential</th></tr>
+    <tr><td><code>gpt-4.1</code>, <code>gpt-4o-mini</code></td><td><code>OPENAI_API_KEY</code></td></tr>
+    <tr><td><code>gemini-flash</code></td><td><code>GEMINI_API_KEY</code></td></tr>
+    <tr><td><code>qwen</code>, <code>haiku</code>, <code>bedrock-sonnet</code>, <code>mistral</code>, <code>deepseek</code>, <code>llama</code>, <code>gpt-oss-120b</code>, <code>gpt-oss-safeguard-120b</code>, <code>gpt-oss-20b</code>, <code>qwen3-32b</code>, <code>gpt5.6-terra</code></td><td>AWS Bedrock (region <code>eu-west-2</code>)</td></tr>
+    <tr><td><code>glm</code></td><td><code>FIREWORKS_API_KEY</code></td></tr>
+    <tr><td><code>qwen-uncensored</code></td><td><code>RUNPOD_API_KEY</code> (self-hosted; fill in your own RunPod endpoint first)</td></tr>
+  </table>
+  <p style="margin-top:14px"><code>gpt5.6-terra</code> is an OpenAI model
+  (<code>model: global.openai.gpt-5.6-terra</code>) configured here <b>via AWS Bedrock</b> to
+  test its availability there. You can instead point it at the OpenAI API
+  (<code>type: openai-compatible</code>, <code>api_key_env: OPENAI_API_KEY</code>).</p>
+  <p>You can also add your own models (§5). The supported <code>type</code>s are
+  <b><code>openai-compatible</code></b>, <b><code>fireworks</code></b>,
+  <b><code>anthropic</code></b>, <b><code>aws-bedrock</code></b> and
+  <b><code>ollama</code></b>.</p>
+</section>
+
+<section>
+  <h2>1. Configure credentials</h2>
+  <p class="sub">API keys go in <code>.env</code>; AWS Bedrock uses the AWS credential chain.</p>
+  <p><b>For API keys</b>, the harness reads a file called <code>.env</code> in the directory
+  you launch from. On the Deep Cyber VM, use the one provided at <code>/opt/airt/src/.env</code>.</p>
+  <pre><span class="c">#   OPENAI_API_KEY=sk-...</span></pre>
+  <p><code>.env</code> holds your secrets — it is git-ignored, so it won't be committed. Fill
+  in only the providers you have; leave the rest blank.</p>
+  <p><b>For AWS Bedrock</b> there is no key in <code>.env</code>. The VM ships with the AWS CLI
+  installed; configure credentials the normal way:</p>
+  <pre>aws configure          <span class="c"># enter your access key, secret, and region (eu-west-2)</span></pre>
+  <p>(Or set <code>AWS_ACCESS_KEY_ID</code> / <code>AWS_SECRET_ACCESS_KEY</code> in
+  <code>.env</code> — the variable names must be UPPER CASE.) Bedrock must be
+  <b>enabled in your account</b> for the region <i>and</i> for the specific model —
+  AWS console → Bedrock → <i>Model access</i>.</p>
+</section>
+
+<section>
+  <h2>2. Launch the target &amp; check model selection</h2>
+  <p class="sub">The VM launches targets with <code>airt-target</code>.</p>
+  <pre><span class="k">airt-target</span> larkfield                <span class="c"># default model (gpt-4.1)</span>
+<span class="k">airt-target</span> larkfield --model qwen     <span class="c"># start on a different model</span></pre>
+  <p>The model must be in <code>models.yaml</code> and active (its credential present). Once
+  it's up, use <code>GET /models</code> to verify what your credentials unlocked:</p>
+  <pre><span class="c"># Larkfield (DeepCyber CTF)</span>
+curl -s localhost:8089/models | python3 -m json.tool
+<span class="c"># Money Agent (Deep Vault Capital)</span>
+curl -s localhost:8090/models | python3 -m json.tool
+<span class="c"># Investigations (governance)</span>
+curl -s localhost:8091/models | python3 -m json.tool</pre>
+  <pre>{
+  <span class="s">"models"</span>:    [<span class="s">"gpt-4.1"</span>, <span class="s">"gpt-4o-mini"</span>, <span class="s">"qwen"</span>, <span class="s">"..."</span>],
+  <span class="s">"available"</span>: [<span class="s">"gpt-4.1"</span>, <span class="s">"gpt-4o-mini"</span>],   <span class="c">// what YOUR credentials unlocked</span>
+  <span class="s">"current"</span>:   <span class="s">"gpt-4.1"</span>                      <span class="c">// what's answering now</span>
+}</pre>
+  <p>Tail the log to troubleshoot:</p>
+  <pre>tail -f ~/.airt-target/logs/larkfield-mock.log
+tail -f ~/.airt-target/logs/moneyagent-mock.log</pre>
+</section>
+
+<section>
+  <h2>3. Test that your model actually answers</h2>
+  <p class="sub"><b>API</b></p>
+  <pre>curl -s localhost:8089/chat -H <span class="s">'Content-Type: application/json'</span> -H <span class="s">'x-session-id: t1'</span> \
+  -d <span class="s">'{"input":"hello - who are you?"}'</span> | python3 -m json.tool</pre>
+  <p><b>UI</b> — open the web UI (<b>http://localhost:7860</b>, adjust the port for other
+  targets), pick the model, and type <code>hello</code>. A normal reply means the model and
+  its credentials work end to end. If instead you see:</p>
+  <ul>
+    <li><code>[ERROR] LLM backend unavailable</code> → the key is wrong, missing, or the provider rejected it.</li>
+    <li><code>[ERROR] Bedrock unavailable</code> → AWS credentials, region, or model-access problem (see §6).</li>
+  </ul>
+</section>
+
+<section>
+  <h2>4. Switching the model live — dropdown, API, or target</h2>
+  <p class="sub">Change which model is answering at any time, <b>no restart</b>. Three equivalent ways.</p>
+  <p><b>A. The GUI dropdown (easiest).</b> In the web UI the <b>Target model</b> dropdown lists
+  the models your credentials unlocked. Pick one — it switches immediately and starts a
+  <b>fresh session</b>, so a transcript never mixes two models. Only credentialed models are offered.</p>
+  <p><b>B. The target directly (<code>:8089</code>):</b></p>
+  <pre>curl -s http://localhost:8089/models                       <span class="c"># names, available, current</span>
+curl -s -X POST http://localhost:8089/model \
+  -H <span class="s">'Content-Type: application/json'</span> -d <span class="s">'{"model": "gpt-4o-mini"}'</span></pre>
+  <p><b>C. The canonical API (<code>:8000</code>)</b> — the same control endpoints one layer up
+  (available when the full stack is running under <code>airt-target</code>). Handy for scripting
+  a sweep across models from the same place your red-team tools point:</p>
+  <pre>curl -s http://localhost:8000/catalogue                    <span class="c"># proxies the target's /models</span>
+curl -s -X POST http://localhost:8000/model \
+  -H <span class="s">'Content-Type: application/json'</span> -d <span class="s">'{"model": "gpt-4o-mini"}'</span></pre>
+  <p>Ports are per target: <b>Larkfield</b> API <code>8000</code> / target <code>8089</code>;
+  <b>Money Agent</b> API <code>8001</code> / target <code>8090</code>.</p>
+  <p>Things to know when you script it (the dropdown handles these for you):</p>
+  <ul>
+    <li>The <b>API/target endpoints do not pre-filter by credentials</b> — a <code>POST /model</code>
+      to a model you have no key for <i>succeeds</i>, and the next message then returns
+      <code>[ERROR] LLM backend unavailable … check the API key</code>. Read <code>available</code>
+      from <code>/catalogue</code> (or <code>/models</code>) first.</li>
+    <li>Switching via the endpoint does <b>not</b> auto-start a fresh session — send a new
+      <code>x-session-id</code> yourself so a transcript doesn't span two models.</li>
+    <li>An unknown name returns <code>400 unknown model</code>; a target with no catalogue returns
+      <code>400 no models catalogue loaded</code>.</li>
+  </ul>
+</section>
+
+<section>
+  <h2>5. Adding your own model (optional)</h2>
+  <p class="sub"><code>models.yaml</code> is the catalogue — add an entry under <code>models:</code>.</p>
+  <pre>models:
+  <span class="c"># Any OpenAI-compatible HTTP endpoint (OpenAI, Gemini, local vLLM, RunPod, …)</span>
+  my-model:
+    type: openai-compatible
+    base_url: https://api.openai.com/v1
+    model: gpt-4.1                 <span class="c"># the provider's model id</span>
+    api_key_env: OPENAI_API_KEY    <span class="c"># the .env var holding the key</span>
+
+  <span class="c"># An AWS Bedrock model</span>
+  my-bedrock-model:
+    type: aws-bedrock
+    model: qwen.qwen3-235b-a22b-2507-v1:0   <span class="c"># the Bedrock model / inference-profile id</span>
+    region: eu-west-2</pre>
+  <p><code>default_model:</code> at the top sets which one answers first. If it has no
+  credentials, the harness falls back to the first model in the file that does — so keep the
+  list ordered with your most-likely-available model near the top.</p>
+
+  <h3 style="margin-top:22px">5.1 Ollama on your host, from the course VM</h3>
+  <p><b>1. On the Mac (host), make Ollama listen beyond localhost.</b> By default it binds
+  <code>127.0.0.1</code>, which the VM can't reach.</p>
+  <pre>brew install ollama          <span class="c"># or the app from ollama.com</span>
+ollama pull llama3.2         <span class="c"># ~2 GB, fast enough to be useful</span>
+OLLAMA_HOST=0.0.0.0 ollama serve</pre>
+  <p>If you use the menu-bar app rather than <code>ollama serve</code>, set the variable where
+  the app will see it, then restart it:</p>
+  <pre>launchctl setenv OLLAMA_HOST 0.0.0.0</pre>
+  <p>macOS may prompt to allow incoming connections — say yes.</p>
+  <p><b>2. In the VM, find the host and prove you can reach it.</b></p>
+  <pre>ip route | awk <span class="s">'/default/ {print $3}'</span>        <span class="c"># UTM is usually 192.168.64.1</span>
+curl http://192.168.64.1:11434/api/tags      <span class="c"># should list llama3.2</span></pre>
+  <p>If that <code>curl</code> fails, nothing else will work — it's the host binding or the
+  firewall, not the harness.</p>
+  <p><b>3. Add a catalogue entry.</b> Edit <code>/opt/airt/src/airt_harness/models.yaml</code>
+  and put this under <code>models:</code>, matching the two-space indentation already there:</p>
+  <pre>  local:
+    type: ollama
+    model: llama3.2
+    base_url: http://192.168.64.1:11434</pre>
+  <p>No <code>api_key_env</code> — Ollama needs no credential, and the harness treats an
+  <code>ollama</code> entry as always available. The harness posts to <code>&lt;base_url&gt;/api/chat</code>,
+  which is what <code>ollama serve</code> exposes.</p>
+  <p><b>4. Use it.</b></p>
+  <pre><span class="k">airt-target</span> stop
+<span class="k">airt-target</span> larkfield --model local</pre>
+  <p>The <code>Model:</code> line should say <code>local</code>. Then:</p>
+  <pre>curl -s localhost:8089/chat -H <span class="s">'Content-Type: application/json'</span> -H <span class="s">'x-session-id: o1'</span> \
+  -d <span class="s">'{"input":"hello - who are you?"}'</span> | python3 -m json.tool</pre>
+</section>
+
+<section>
+  <h2>6. Troubleshooting</h2>
+  <table>
+    <tr><th>Symptom</th><th>Cause</th><th>Fix</th></tr>
+    <tr><td><code>available</code> is empty in <code>/models</code></td><td>No credential found</td><td>Check <code>.env</code> is where you launched from and has a non-blank key; for Bedrock, <code>aws configure</code></td></tr>
+    <tr><td>A model is missing from <code>available</code></td><td>That provider's key/creds not set</td><td>Set its <code>api_key_env</code> in <code>.env</code>, or AWS creds for a Bedrock model</td></tr>
+    <tr><td><code>[ERROR] LLM backend unavailable</code></td><td>Wrong/expired key, or provider error</td><td>Re-check the key; try it against the provider directly</td></tr>
+    <tr><td><code>[ERROR] Bedrock unavailable</code></td><td>AWS creds, region, or model access</td><td><code>aws sts get-caller-identity</code> to confirm creds; enable the model in Bedrock → <i>Model access</i>; confirm the region</td></tr>
+    <tr><td><code>invalid model identifier</code> (Bedrock)</td><td>Model id / inference-profile / region mismatch</td><td>Confirm the exact id in the AWS console and that <code>region</code> matches where it's enabled</td></tr>
+    <tr><td>Reply is very slow / times out</td><td>Large or slow model</td><td>Raise <code>MOCK_HTTP_TIMEOUT</code> in <code>.env</code>, or pick a faster model</td></tr>
+  </table>
+  <p class="foot">Deep Cyber AI Red Teaming Framework · configuring &amp; testing your models.
+  Synthetic targets and data throughout; authorised testing only.</p>
+</section>
+
+</div>
+</body>
+</html>
