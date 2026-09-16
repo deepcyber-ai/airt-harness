@@ -79,44 +79,78 @@
 
 <section>
   <h2>Run a target</h2>
-  <p class="sub">Each target needs its tool server (the database behind the flags) and then the mock.
-  The two CTF tool servers use different ports, so they never clash.</p>
+  <p class="sub">One command brings up the whole stack (tool server, target, API and GUI) and prints
+  its URLs. Each target gets its own ports, so you can run two side by side.</p>
+
+  <pre><span class="k">airt-target</span> larkfield      <span class="c"># Larkfield Assistant (DeepCyber CTF)</span>
+<span class="k">airt-target</span> moneyagent     <span class="c"># Money Agent (Deep Vault Capital CTF)</span>
+<span class="k">airt-target</span> governance     <span class="c"># Investigations (the agentic governance rung)</span>
+<span class="k">airt-target</span> status         <span class="c"># what is running, and on which ports</span>
+<span class="k">airt-target</span> stop [name]    <span class="c"># stop one target (or all, with no name)</span></pre>
 
   <div class="block">
     <h3>Larkfield <span class="pill">OWASP LLM Top 10</span></h3>
     <p>A deliberately-vulnerable retail support assistant. Twelve <code>OWASP{…}</code> flags across nine
-    of the ten OWASP LLM categories. All data synthetic.</p>
-    <pre>cd /opt/airt/src/airt_harness
-python vendor/larkfield-db-mcp/server.py --port 8200 --version 1.0.2 &amp;
-python -m harness.mock --profile profiles/deepcyber-ctf/profile.yaml --port 8080</pre>
+    of the ten OWASP LLM categories. All data synthetic. <span style="color:var(--muted)">MCP 8200 ·
+    target 8080 · API 8000 · GUI 7860</span></p>
   </div>
 
   <div class="block">
     <h3>Deep Vault Capital <span class="pill">Agentic · FCA</span></h3>
     <p>An agentic financial-adviser with a real tool surface and FCA boundaries. <code>DVC{…}</code> /
-    <code>FCA{…}</code> flags fire on a real database effect. Two postures - unsecured and hardened.</p>
-    <pre>cd /opt/airt/src/airt_harness
-python vendor/dvc-db-mcp/server.py --port 8210 &amp;
-python -m harness.mock --profile profiles/deepvault-capital/profile.yaml --port 8080
-<span class="c"># hardened: add --system-prompt profiles/deepvault-capital/mock/system_prompt_hardened.txt</span></pre>
+    <code>FCA{…}</code> flags fire on a real database effect. <span style="color:var(--muted)">MCP 8210 ·
+    target 8081 · API 8001 · GUI 7861</span></p>
   </div>
 
   <div class="block">
     <h3>DeepTrace Investigations <span class="pill">Runtime governance</span></h3>
-    <p>A Cedar policy allows / denies / escalates each tool action deterministically. Separate checkout,
-    so <b><code>cd</code> into it first</b>.</p>
-    <pre>cd /opt/airt/src/airt_governance
-python -m harness.mock --profile profiles/investigations/profile.yaml --port 8091</pre>
+    <p>A Cedar policy allows / denies / escalates each tool action deterministically. Runs from its own
+    governance checkout. <span style="color:var(--muted)">no MCP · target 8091 · API 8002 · GUI 7862</span></p>
   </div>
-  <p style="font-size:.9rem;color:var(--muted)">Run one CTF mock at a time (both use <code>8080</code>);
-  governance runs alongside on <code>8091</code>. Pick the backing model with the GUI dropdown or
-  <code>POST /model</code> - only models whose key is in <code>.env</code> appear (see
-  <code>MODELS-SETUP.md</code>); <code>echo</code> needs no key.</p>
+
+  <div class="vmnote" style="margin-top:14px">🧱 <b>Three layers - point your tools at the right one.</b>
+  The <b>GUI</b> (e.g. <code>:7860</code>) talks to the <b>canonical API</b>
+  (<code>harness.server</code>, e.g. <code>:8000</code>), which fronts the <b>target</b> mock (e.g.
+  <code>:8080</code>). Pointing the GUI at the target's port does not work. Red-team tools use the API
+  (<code>/v1/chat/completions</code>); you can also curl the target directly (below).
+  <a href="why-airt-harness.html">More on the three layers →</a></div>
+
+  <div class="vmnote" style="margin-top:14px">🔑 <b>You need a live model to earn a flag.</b> With no
+  credentials the stack still comes up and the GUI works, but the target answers on the
+  <code>echo</code> backend - enough for <code>airt-selfcheck</code>, but echo does not run the target's
+  logic, so no attack fires a flag. <code>airt-target</code> prints a note when no key is present. Add a
+  key first: copy <code>.env.example</code> to <code>.env</code> and set one provider
+  (<code>OPENAI_API_KEY</code>, or an AWS profile for Bedrock) as <code>MODELS-SETUP.md</code>
+  describes, then select that model with the GUI dropdown or <code>POST /model</code>.</div>
+
+  <details style="margin-top:16px">
+    <summary style="cursor:pointer;color:var(--accent);font-size:.92rem">Appendix: the manual four-process recipe (what <code>airt-target</code> runs)</summary>
+    <p style="font-size:.9rem;color:var(--muted);margin-top:10px">If you want to see the parts, bring a
+    target up by hand. Run one CTF target at a time on <code>:8080</code>; governance runs from its own
+    checkout as the working directory.</p>
+    <pre><span class="c"># Larkfield</span>
+cd /opt/airt/src/airt_harness
+python profiles/deepcyber-ctf/vendor/larkfield-db-mcp/server.py --port 8200 --version 1.0.2 &amp;
+python -m harness.mock --profile profiles/deepcyber-ctf/profile.yaml --port 8080
+
+<span class="c"># Deep Vault Capital (hardened: add --system-prompt profiles/deepvault-capital/mock/system_prompt_hardened.txt)</span>
+cd /opt/airt/src/airt_harness
+python profiles/deepvault-capital/vendor/dvc-db-mcp/server.py --port 8210 &amp;
+python -m harness.mock --profile profiles/deepvault-capital/profile.yaml --port 8080
+
+<span class="c"># Investigations (governance) - its own checkout as cwd</span>
+cd /opt/airt/src/airt_governance
+python -m harness.mock --profile profiles/investigations/profile.yaml --port 8091</pre>
+  </details>
 </section>
 
 <section>
   <h2>Talk to it &amp; red-team it</h2>
-  <p class="sub">You started the target on <code>:8080</code> - talk to it there. (The OpenAI-compatible <code>/v1/chat/completions</code> front is the canonical proxy on <code>:8000</code>; run <code>uvicorn harness.server:app --port 8000</code> to point an OpenAI tool at it.)</p>
+  <p class="sub">Talk to the <b>target</b> mock on its own port (Larkfield <code>:8080</code>, Money Agent
+  <code>:8081</code>) - the examples below use Larkfield's <code>:8080</code>. The OpenAI-compatible
+  <code>/v1/chat/completions</code> front is the canonical <b>API</b> that <code>airt-target</code> also
+  starts (Larkfield <code>:8000</code>, Money Agent <code>:8001</code>); point OpenAI-style tools and the
+  GUI there, not at the target port.</p>
   <div class="snips">
     <div class="snip"><h4>Send a message (or the OpenAI-compatible <code>/v1/chat/completions</code>)</h4>
       <pre><span class="k">curl</span> -X POST http://localhost:8080/chat -H <span class="s">"Content-Type: application/json"</span> \
@@ -135,13 +169,15 @@ airt-replay profiles/default/intel/ --session abc123 -o results/replay.md</pre><
 
 <section>
   <h2>Ports</h2>
+  <p class="sub">Each target gets its own set, so two can run side by side.</p>
   <table>
-    <tr><th>Port</th><th>Service</th></tr>
-    <tr><td><code>8000</code></td><td>Canonical proxy (OpenAI-compatible <code>/v1/chat/completions</code> + <code>/chat</code>)</td></tr>
-    <tr><td><code>8080</code></td><td>CTF mock/target - Larkfield or DVC (one at a time); curl <code>/chat</code>, <code>/firewall</code> here</td></tr>
-    <tr><td><code>8091</code></td><td>Governance rung (DeepTrace Investigations)</td></tr>
-    <tr><td><code>8200</code> / <code>8210</code></td><td>Larkfield / DVC tool servers (different ports - no clash)</td></tr>
+    <tr><th>Target</th><th>MCP tool server</th><th>target (mock)</th><th>API</th><th>GUI</th></tr>
+    <tr><td>Larkfield</td><td><code>8200</code></td><td><code>8080</code></td><td><code>8000</code></td><td><code>7860</code></td></tr>
+    <tr><td>Money Agent</td><td><code>8210</code></td><td><code>8081</code></td><td><code>8001</code></td><td><code>7861</code></td></tr>
+    <tr><td>Investigations (governance)</td><td>—</td><td><code>8091</code></td><td><code>8002</code></td><td><code>7862</code></td></tr>
   </table>
+  <p style="font-size:.9rem;color:var(--muted)">The <b>API</b> fronts the <b>target</b>; the <b>GUI</b>
+  talks to the API. Curl <code>/chat</code> and <code>/firewall</code> on the target port.</p>
 </section>
 
 <section>
