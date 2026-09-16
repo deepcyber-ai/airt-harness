@@ -125,8 +125,8 @@
   <code>.env</code> is <code>/opt/airt/src/.env</code>, one level above both checkouts - do not add a
   second one deeper in the tree, it would shadow it) and set one provider (<code>OPENAI_API_KEY</code>,
   or an AWS profile for Bedrock) as <code>MODELS-SETUP.md</code> describes, then select that model with
-  the GUI dropdown or <code>POST /model</code>. The startup banner shows the selected model and how many
-  of the catalogue's models have credentials.</div>
+  the GUI dropdown or <code>POST /model</code>. <code>airt-target</code> prints the selected model and how
+  many catalogue models have credentials (and names <code>/opt/airt/src/.env</code> when none do).</div>
 
   <details style="margin-top:16px">
     <summary style="cursor:pointer;color:var(--accent);font-size:.92rem">Appendix: the manual four-process recipe (what <code>airt-target</code> runs)</summary>
@@ -137,7 +137,10 @@
     starts all four. Each course profile picks its model from the catalogue and ignores
     <code>--backend</code> (deprecated; it still steers the five legacy profiles), so with no key present
     every message returns <code>[ERROR] LLM backend unavailable</code> and no flag fires - there is no
-    echo fallback (see the credentials note above).</p>
+    echo fallback (see the credentials note above). At this release the mock's own startup line still
+    shows the legacy <code>--backend</code> value (e.g. <code>Backend: echo</code>), which is not a
+    reliable guide under a catalogue - read <code>airt-target</code>'s output or <code>POST /model</code>
+    for the live model.</p>
     <pre><span class="c"># Larkfield  (target 8080)</span>
 cd /opt/airt/src/airt_harness
 python profiles/deepcyber-ctf/vendor/larkfield-db-mcp/server.py --port 8200 --version 1.0.2 &amp;
