@@ -647,6 +647,16 @@ async def call_openai(messages: list[dict], model: str, api_key: str, base_url: 
                         continue
                     resp.raise_for_status()
                     return resp.json()["choices"][0]["message"]["content"]
+            except httpx.HTTPStatusError as e:
+                # A client error the retry block above did not absorb - 401 bad key,
+                # 403 no model access, 404 unknown model. Terminal: do NOT retry (six
+                # backoffs on an invalid key is a two-minute wait for an error that
+                # never clears), and return the sentinel so it is counted as an infra
+                # failure at the dispatch choke point AND names the fixable cause,
+                # rather than raising into an unhandled 500 that looks like a dead VM.
+                code = e.response.status_code
+                return (f"[ERROR] LLM backend unavailable: {code} {e.response.reason_phrase} "
+                        f"for model {model!r} - check the API key and model access for this provider")
             except httpx.RequestError as e:
                 if attempt < 5:
                     await asyncio.sleep(2 ** attempt + random.uniform(0, 1))
@@ -673,6 +683,16 @@ async def call_anthropic(messages: list[dict], model: str, api_key: str) -> str:
                         continue
                     resp.raise_for_status()
                     return resp.json()["content"][0]["text"]
+            except httpx.HTTPStatusError as e:
+                # A client error the retry block above did not absorb - 401 bad key,
+                # 403 no model access, 404 unknown model. Terminal: do NOT retry (six
+                # backoffs on an invalid key is a two-minute wait for an error that
+                # never clears), and return the sentinel so it is counted as an infra
+                # failure at the dispatch choke point AND names the fixable cause,
+                # rather than raising into an unhandled 500 that looks like a dead VM.
+                code = e.response.status_code
+                return (f"[ERROR] LLM backend unavailable: {code} {e.response.reason_phrase} "
+                        f"for model {model!r} - check the API key and model access for this provider")
             except httpx.RequestError as e:
                 if attempt < 5:
                     await asyncio.sleep(2 ** attempt + random.uniform(0, 1))
@@ -834,8 +854,29 @@ mapper = None
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     print(BANNER)
-    print(f"  Profile: {app_config.get('target', '?')}")
-    print(f"  Backend: {app_config.get('backend', 'echo')} ({app_config.get('model', 'N/A')})")
+    # Show the profile's own identity, not the 'target' mapper-selector key (which is
+    # "example" for every course profile). Prefer the friendly display_name, then the
+    # profile directory name; fall back to the mapper key only if neither is set.
+    print(f"  Profile: {app_config.get('display_name') or app_config.get('profile_name') or app_config.get('target', '?')}")
+    if _catalogue is not None:
+        # A model catalogue is active: the mock reads it first and ignores
+        # --backend, so report the catalogue truth, not the legacy backend value.
+        try:
+            from ai_models import available
+            usable = available(_catalogue)
+        except Exception:
+            usable = []
+        total = len(_catalogue.models)
+        if _current_model:
+            print(f"  Model:   {_current_model} "
+                  f"({len(usable)} of {total} catalogue models have credentials)")
+        else:
+            print(f"  Model:   none usable - 0 of {total} catalogue models have "
+                  f"credentials; set an API key or AWS profile or every message errors")
+        print("  (--backend is ignored here: this profile declares a model catalogue. "
+              "The flag is deprecated and still steers the five legacy profiles.)")
+    else:
+        print(f"  Backend: {app_config.get('backend', 'echo')} ({app_config.get('model', 'N/A')})")
     print(f"  Port:    {app_config.get('port', 8089)}")
     print()
     yield
@@ -1359,7 +1400,7 @@ def main():
     # Target's own input screening — on unless the profile opts out.
     input_filter = profile.get("mock", {}).get("input_filter", True)
 
-    app_config.update({"target": target_name, "backend": args.backend, "model": model, "port": args.port, "ollama_url": args.ollama_url, "base_url": args.base_url, "system_prompt": system_prompt, "input_filter": input_filter, "profile_dir": profile_dir, "profile_name": os.path.basename(profile_dir), "mock_config": profile.get("mock", {})})
+    app_config.update({"target": target_name, "display_name": profile.get("display_name"), "backend": args.backend, "model": model, "port": args.port, "ollama_url": args.ollama_url, "base_url": args.base_url, "system_prompt": system_prompt, "input_filter": input_filter, "profile_dir": profile_dir, "profile_name": os.path.basename(profile_dir), "mock_config": profile.get("mock", {})})
 
     if not input_filter:
         logger.info("Input filter DISABLED — target is unguarded by request")

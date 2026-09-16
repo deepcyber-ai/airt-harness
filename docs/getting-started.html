@@ -92,14 +92,14 @@
     <h3>Larkfield <span class="pill">OWASP LLM Top 10</span></h3>
     <p>A deliberately-vulnerable retail support assistant. Twelve <code>OWASP{…}</code> flags across nine
     of the ten OWASP LLM categories. All data synthetic. <span style="color:var(--muted)">MCP 8200 ·
-    target 8080 · API 8000 · GUI 7860</span></p>
+    target 8089 · API 8000 · GUI 7860</span></p>
   </div>
 
   <div class="block">
     <h3>Deep Vault Capital <span class="pill">Agentic · FCA</span></h3>
     <p>An agentic financial-adviser with a real tool surface and FCA boundaries. <code>DVC{…}</code> /
     <code>FCA{…}</code> flags fire on a real database effect. <span style="color:var(--muted)">MCP 8210 ·
-    target 8081 · API 8001 · GUI 7861</span></p>
+    target 8090 · API 8001 · GUI 7861</span></p>
   </div>
 
   <div class="block">
@@ -111,9 +111,14 @@
   <div class="vmnote" style="margin-top:14px">🧱 <b>Three layers - point your tools at the right one.</b>
   The <b>GUI</b> (e.g. <code>:7860</code>) talks to the <b>canonical API</b>
   (<code>harness.server</code>, e.g. <code>:8000</code>), which fronts the <b>target</b> mock (e.g.
-  <code>:8080</code>). Pointing the GUI at the target's port does not work. Red-team tools use the API
+  <code>:8089</code>). Pointing the GUI at the target's port does not work. Red-team tools use the API
   (<code>/v1/chat/completions</code>); you can also curl the target directly (below).
-  <a href="why-airt-harness.html">More on the three layers →</a></div>
+  <a href="why-airt-harness.html">More on the three layers →</a>
+  <br><br>Each target's mock port is whatever its <b>profile's <code>api.url</code></b> declares -
+  Larkfield <code>8089</code>, Money Agent <code>8090</code>, Investigations <code>8091</code> - and
+  <code>harness.server</code> dials exactly that. <code>airt-target</code> reads it from the profile, so
+  the two can't drift; if you launch the mock by hand, its <code>--port</code> must match the profile's
+  <code>api.url</code> or the API answers with a 502.</div>
 
   <div class="vmnote" style="margin-top:14px">🔑 <b>You need a live model to earn a flag.</b> With no
   credentials the stack still comes up and the GUI works, and <code>airt-selfcheck</code> passes (it does
@@ -141,15 +146,15 @@
     shows the legacy <code>--backend</code> value (e.g. <code>Backend: echo</code>), which is not a
     reliable guide under a catalogue - read <code>airt-target</code>'s output or <code>POST /model</code>
     for the live model.</p>
-    <pre><span class="c"># Larkfield  (target 8080)</span>
+    <pre><span class="c"># Larkfield  (target 8089)</span>
 cd /opt/airt/src/airt_harness
 python profiles/deepcyber-ctf/vendor/larkfield-db-mcp/server.py --port 8200 --version 1.0.2 &amp;
-python -m harness.mock --profile profiles/deepcyber-ctf/profile.yaml --port 8080
+python -m harness.mock --profile profiles/deepcyber-ctf/profile.yaml --port 8089
 
-<span class="c"># Deep Vault Capital  (target 8081 - NOT 8080; hardened: add --system-prompt profiles/deepvault-capital/mock/system_prompt_hardened.txt)</span>
+<span class="c"># Deep Vault Capital  (target 8090 - NOT 8089; hardened: add --system-prompt profiles/deepvault-capital/mock/system_prompt_hardened.txt)</span>
 cd /opt/airt/src/airt_harness
 python profiles/deepvault-capital/vendor/dvc-db-mcp/server.py --port 8210 &amp;
-python -m harness.mock --profile profiles/deepvault-capital/profile.yaml --port 8081
+python -m harness.mock --profile profiles/deepvault-capital/profile.yaml --port 8090
 
 <span class="c"># Investigations (governance)  (target 8091) - its own checkout as cwd</span>
 cd /opt/airt/src/airt_governance
@@ -159,17 +164,17 @@ python -m harness.mock --profile profiles/investigations/profile.yaml --port 809
 
 <section>
   <h2>Talk to it &amp; red-team it</h2>
-  <p class="sub">Talk to the <b>target</b> mock on its own port (Larkfield <code>:8080</code>, Money Agent
-  <code>:8081</code>) - the examples below use Larkfield's <code>:8080</code>. The OpenAI-compatible
+  <p class="sub">Talk to the <b>target</b> mock on its own port (Larkfield <code>:8089</code>, Money Agent
+  <code>:8090</code>) - the examples below use Larkfield's <code>:8089</code>. The OpenAI-compatible
   <code>/v1/chat/completions</code> front is the canonical <b>API</b> that <code>airt-target</code> also
   starts (Larkfield <code>:8000</code>, Money Agent <code>:8001</code>); point OpenAI-style tools and the
   GUI there, not at the target port.</p>
   <div class="snips">
     <div class="snip"><h4>Send a message (or the OpenAI-compatible <code>/v1/chat/completions</code>)</h4>
-      <pre><span class="k">curl</span> -X POST http://localhost:8080/chat -H <span class="s">"Content-Type: application/json"</span> \
+      <pre><span class="k">curl</span> -X POST http://localhost:8089/chat -H <span class="s">"Content-Type: application/json"</span> \
   -d <span class="s">'{"input": "What is an ISA?"}'</span></pre></div>
     <div class="snip"><h4>Toggle the HumanBound firewall (guardrail), then re-run the same attacks</h4>
-      <pre><span class="k">curl</span> -X POST http://localhost:8080/firewall -d <span class="s">'{"enabled": true}'</span></pre></div>
+      <pre><span class="k">curl</span> -X POST http://localhost:8089/firewall -d <span class="s">'{"enabled": true}'</span></pre></div>
     <div class="snip"><h4>Replay recorded sessions against the current target</h4>
       <pre>airt-replay profiles/default/intel/ --list-sessions
 airt-replay profiles/default/intel/ --session abc123 -o results/replay.md</pre></div>
@@ -185,8 +190,8 @@ airt-replay profiles/default/intel/ --session abc123 -o results/replay.md</pre><
   <p class="sub">Each target gets its own set, so two can run side by side.</p>
   <table>
     <tr><th>Target</th><th>MCP tool server</th><th>target (mock)</th><th>API</th><th>GUI</th></tr>
-    <tr><td>Larkfield</td><td><code>8200</code></td><td><code>8080</code></td><td><code>8000</code></td><td><code>7860</code></td></tr>
-    <tr><td>Money Agent</td><td><code>8210</code></td><td><code>8081</code></td><td><code>8001</code></td><td><code>7861</code></td></tr>
+    <tr><td>Larkfield</td><td><code>8200</code></td><td><code>8089</code></td><td><code>8000</code></td><td><code>7860</code></td></tr>
+    <tr><td>Money Agent</td><td><code>8210</code></td><td><code>8090</code></td><td><code>8001</code></td><td><code>7861</code></td></tr>
     <tr><td>Investigations (governance)</td><td>—</td><td><code>8091</code></td><td><code>8002</code></td><td><code>7862</code></td></tr>
   </table>
   <p style="font-size:.9rem;color:var(--muted)">The <b>API</b> fronts the <b>target</b>; the <b>GUI</b>
