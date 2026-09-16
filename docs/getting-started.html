@@ -116,12 +116,17 @@
   <a href="why-airt-harness.html">More on the three layers →</a></div>
 
   <div class="vmnote" style="margin-top:14px">🔑 <b>You need a live model to earn a flag.</b> With no
-  credentials the stack still comes up and the GUI works, but the target answers on the
-  <code>echo</code> backend - enough for <code>airt-selfcheck</code>, but echo does not run the target's
-  logic, so no attack fires a flag. <code>airt-target</code> prints a note when no key is present. Add a
-  key first: copy <code>.env.example</code> to <code>.env</code> and set one provider
-  (<code>OPENAI_API_KEY</code>, or an AWS profile for Bedrock) as <code>MODELS-SETUP.md</code>
-  describes, then select that model with the GUI dropdown or <code>POST /model</code>.</div>
+  credentials the stack still comes up and the GUI works, and <code>airt-selfcheck</code> passes (it does
+  not need a live model). But the course profiles read a <b>model catalogue</b>, and there is <b>no echo
+  fallback</b> for them: with no key present every chat message comes back as
+  <code>[ERROR] LLM backend unavailable</code>, not an answer - so no attack can fire a flag until you
+  select a model whose credential is present. <code>airt-target</code> prints a note when no key is
+  present. Add a key first: copy <code>.env.example</code> to <code>.env</code> (on the VM the active
+  <code>.env</code> is <code>/opt/airt/src/.env</code>, one level above both checkouts - do not add a
+  second one deeper in the tree, it would shadow it) and set one provider (<code>OPENAI_API_KEY</code>,
+  or an AWS profile for Bedrock) as <code>MODELS-SETUP.md</code> describes, then select that model with
+  the GUI dropdown or <code>POST /model</code>. The startup banner shows the selected model and how many
+  of the catalogue's models have credentials.</div>
 
   <details style="margin-top:16px">
     <summary style="cursor:pointer;color:var(--accent);font-size:.92rem">Appendix: the manual four-process recipe (what <code>airt-target</code> runs)</summary>
@@ -129,8 +134,10 @@
     target up by hand. Use each target's own ports (below), so two can run at once; governance runs from
     its own checkout as the working directory. <b>This starts only the tool server and the target</b> -
     the API (<code>harness.server</code>) and GUI are the other two layers, and <code>airt-target</code>
-    starts all four. The profile picks its model from the catalogue, so with no key in <code>.env</code>
-    it answers on <code>echo</code> and fires no flag (see the credentials note above).</p>
+    starts all four. Each course profile picks its model from the catalogue and ignores
+    <code>--backend</code> (deprecated; it still steers the five legacy profiles), so with no key present
+    every message returns <code>[ERROR] LLM backend unavailable</code> and no flag fires - there is no
+    echo fallback (see the credentials note above).</p>
     <pre><span class="c"># Larkfield  (target 8080)</span>
 cd /opt/airt/src/airt_harness
 python profiles/deepcyber-ctf/vendor/larkfield-db-mcp/server.py --port 8200 --version 1.0.2 &amp;
