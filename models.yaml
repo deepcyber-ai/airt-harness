@@ -38,6 +38,10 @@ models:
     type: aws-bedrock
     model: qwen.qwen3-235b-a22b-2507-v1:0
     region: eu-west-2
+  haiku:
+    type: aws-bedrock
+    model: eu.anthropic.claude-haiku-4-5-20251001-v1:0
+    region: eu-west-2
 
   bedrock-sonnet:
     type: aws-bedrock
@@ -96,3 +100,20 @@ models:
     base_url: https://api.runpod.ai/v2/<RUNPOD_ENDPOINT_ID>/openai/v1   # replace with your endpoint
     model: qwen3-uncensored
     api_key_env: RUNPOD_API_KEY             # supply your own key
+
+# ── Grouped stacks ──────────────────────────────────────────────────────────
+# So a student with only ONE provider can fill BOTH the attacker and scorer
+# roles. Pick one:  export AIRT_GROUP=openai   (needs only OPENAI_API_KEY)
+#                   export AIRT_GROUP=bedrock  (needs only AWS Bedrock creds)
+# Individual AIRT_ATTACKER / AIRT_SCORER still override a group when set.
+groups:
+  openai:
+    attacker: gpt-4.1
+    scorer: gpt-4o-mini
+    promptfoo_grader: openai:gpt-4o-mini
+    compare: [gpt-4.1, gpt-4o-mini]      # two same-provider attackers, M6 activity
+  bedrock:
+    attacker: qwen
+    scorer: haiku
+    promptfoo_grader: bedrock:eu.anthropic.claude-haiku-4-5-20251001-v1:0
+    compare: [qwen, deepseek]             # two same-provider attackers, M6 activity

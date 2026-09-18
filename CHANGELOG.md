@@ -1,0 +1,36 @@
+# Changelog
+
+All notable changes to the AIRT Harness public release. Newest first.
+
+## v1.0.11 — 2026-09-18
+
+- **GUI clean-chat display option.** A new `mock.clean_chat` profile setting makes the chat
+  window show a clean assistant answer while inline `[<tool> result: …]` blocks are hidden from
+  the bubble; the raw response still streams to the browser (recoverable from the Network tab).
+  Larkfield (the CTF profile) defaults it on; every other profile defaults off. Launch the GUI
+  with `--clean-chat {auto,on,off}` to override per session. Display-only — the mock response,
+  flags, detectors, scoring and audit are unchanged. `/health` gains an additive `clean_chat`
+  boolean so the GUI can read the profile default.
+- **Reconnaissance endpoint on by default for the CTF profile.** The read-only `/capabilities`
+  route is now served without the `--recon` launch flag (via `mock.features.recon: true`), so
+  the reconnaissance exercise needs no special flag. Nothing in the scoring path reads it, so
+  measurements are unchanged.
+- **Larkfield detector corrections.** Tool-result blocks are now stripped with full nested-
+  bracket handling (a `search_documents` result's inner `[1]` labels no longer truncate the
+  strip); hyphen/dash variants are normalised before matching; and the knowledge-base
+  contradiction checks also catch reversed wording ("thread count of 400", "GSM … of 150").
+- **AIRT_GROUP model stacks.** `models.yaml` adds grouped attacker/scorer stacks so a student
+  with a single provider (`AIRT_GROUP=openai` or `AIRT_GROUP=bedrock`) can fill both roles,
+  plus a `haiku` Bedrock catalogue entry.
+
+## v1.0.10 — remove the v1.0.9 airt-update validation stamp.
+## v1.0.9 — docs stamp for airt-update validation.
+## v1.0.8 — add the "Configuring & testing your models" page; deprecate MODELS-SETUP.md.
+## v1.0.7 — Larkfield's default prompt is now the plain, un-coached one; the coached prompt is demo-only.
+## v1.0.6 — correct the CTF target ports (8089/8090); a provider 4xx returns a named sentinel, not a 500.
+## v1.0.5 — getting-started: AIRT_GROUP / CHOOSING-MODELS are course-pack, not bare VM (docs-only).
+## v1.0.4 — getting-started: point the banner sentence at airt-target (docs-only).
+## v1.0.3 — getting-started: correct the echo claims and the .env location.
+## v1.0.2 — getting-started: fix the Money Agent manual port (8081) and appendix notes.
+## v1.0.1 — getting-started: airt-target wrapper, correct MCP paths, three-layer note.
+## v1.0.0 — course release: seven profiles, the ai_models backend, and the getting-started docs.

@@ -27,8 +27,8 @@
 # short and already used throughout the material.
 #
 #   name        posture   filter  visibility   how to set it
-#   L0 Planted  planted   off     visible      as shipped
-#   L1 Neutral  neutral   off     visible      --system-prompt mock/system_prompt_neutral.txt
+#   L0 Planted  planted   off     visible      --system-prompt mock/planted_system_prompt.txt
+#   L1 Neutral  neutral   off     visible      as shipped (default mock/system_prompt.txt)
 #   L2 Filtered planted   ON      visible      input_filter: true
 #   L3 Hardened hardened  off     visible      --system-prompt mock/system_prompt_hardened.txt
 #   L4 Guarded  hardened  off     BLIND        ctf.redact_flags: true
@@ -68,6 +68,14 @@ mock:
   # Levels 0/1 do no input screening. Set true for the filtered posture (Level 2).
   input_filter: false
 
+  # Present the chat window like a real product: the GUI hides inline tool-result
+  # blocks from the chat bubble, while the raw response still streams to the browser
+  # (visible in the Network tab). A DISPLAY hint only — read by the GUI via /health;
+  # the mock never branches on it, so flags, detectors and the measured baseline are
+  # unchanged. Launch the GUI with `--clean-chat off` for demonstrations that point
+  # at the tool result in the window.
+  clean_chat: true
+
   # All CTF-specific logic lives in the profile, not in the harness.
   extension: extension.py
 
@@ -87,7 +95,7 @@ mock:
   # opt-in, because attaching it changes how llm05 is scored.
   #
   # With a renderer attached, llm05 is decided by whether a request actually
-  # reached the collector, which is the honest measurement. Without one it falls
+  # reached the collector, which is the direct measurement. Without one it falls
   # back to pattern matching on the reply, which measures the model's willingness
   # to emit markup rather than the application's handling of it. Leave this
   # commented out unless you are deliberately re-measuring on the renderer.
@@ -106,6 +114,14 @@ mock:
     redact_flags: false
 
   features:
+    # ── Reconnaissance endpoint ─────────────────────────────────────
+    # Serves the read-only /capabilities route (used by the reconnaissance exercise)
+    # without needing the --recon launch flag on every start route. Reports the declared
+    # tool set and selected model only — no generation, no tool execution, no data
+    # change — and nothing in the flag/scoring path reads it, so the measured baseline
+    # is unchanged.
+    recon: true
+
     # ── Customer in session ─────────────────────────────────────────
     memory:
       enabled: true

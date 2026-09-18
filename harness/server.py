@@ -610,7 +610,7 @@ async def health():
     else:
         backend_switchable = True  # unknown -> keep the switch (fail open)
 
-    return {"status": "ok", "target": TARGET_NAME, "display_name": DISPLAY_NAME, "mapper": mapper.name, "backend": BACKEND, "api_url": _api_url, "mock_url": mock_url, "real_url": real_url, "backend_switchable": backend_switchable, "cert_status": cert_status, "firewall_enabled": FIREWALL_ENABLED, "profile": PROFILE_PATH, "intel_dir": INTEL_DIR}
+    return {"status": "ok", "target": TARGET_NAME, "display_name": DISPLAY_NAME, "mapper": mapper.name, "backend": BACKEND, "api_url": _api_url, "mock_url": mock_url, "real_url": real_url, "backend_switchable": backend_switchable, "cert_status": cert_status, "firewall_enabled": FIREWALL_ENABLED, "profile": PROFILE_PATH, "intel_dir": INTEL_DIR, "clean_chat": PROFILE.get("mock", {}).get("clean_chat", False)}
 
 
 @app.on_event("shutdown")

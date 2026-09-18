@@ -15,6 +15,7 @@ Usage:
 import argparse
 import json
 import logging
+import re
 import uuid
 from datetime import datetime
 from pathlib import Path
@@ -112,9 +113,53 @@ def harness_auth(harness_url):
 # -- Format helpers ---------------------------------------------------------
 
 
-def format_response(data):
-    """Format harness response for display -- just the assistant answer."""
-    return data.get("answer", "")
+_TOOL_BLOCK_START = re.compile(r"\[\w+ result:")
+
+
+def _strip_tool_result_blocks(text):
+    """Remove whole '[<word> result: ...]' blocks, nested brackets included, so the
+    chat bubble reads like a real product's answer. The raw payload still streams to
+    the browser (the hidden Raw carrier), so it can be recovered from the Network tab.
+    Mirrors the profile detector's strip logic."""
+    out, i = [], 0
+    while True:
+        m = _TOOL_BLOCK_START.search(text, i)
+        if not m:
+            out.append(text[i:])
+            break
+        out.append(text[i:m.start()])
+        depth, j = 0, m.start()
+        while j < len(text):
+            ch = text[j]
+            if ch == "[":
+                depth += 1
+            elif ch == "]":
+                depth -= 1
+                if depth == 0:
+                    j += 1
+                    break
+            j += 1
+        else:
+            j = len(text)
+        i = j
+    return "".join(out)
+
+
+# Shown in the bubble when a reply was nothing but a tool-result block and stripping it
+# leaves no assistant text (e.g. audit row 28226). GUI-authored, kept clearly distinct from
+# model text; flags and the raw evidence are untouched and the raw still reaches the browser.
+_TOOL_ONLY_STATUS = "_Tool output received; no separate assistant answer was returned._"
+
+
+def format_response(data, clean_chat=False):
+    """Format harness response for display -- the assistant answer. With clean_chat on,
+    strip inline tool-result blocks so the bubble shows only the answer; if that leaves
+    nothing (a tool-only reply), show a GUI status instead of an empty bubble."""
+    answer = data.get("answer", "")
+    if not clean_chat:
+        return answer
+    stripped = _strip_tool_result_blocks(answer)
+    return stripped if stripped.strip() else _TOOL_ONLY_STATUS
 
 
 def format_raw(data):
@@ -131,8 +176,9 @@ def format_raw(data):
 # -- Build GUI --------------------------------------------------------------
 
 
-def create_app(harness_url):
+def create_app(harness_url, clean_chat_mode="auto"):
     # Get target info from harness
+    clean_chat_default = False
     try:
         health = harness_health(harness_url)
         target_name = health.get("display_name", health.get("target", "Unknown Target"))
@@ -143,12 +189,21 @@ def create_app(harness_url):
         # two endpoints resolve to different hosts). Default True so an older
         # harness that doesn't send the flag still shows the control.
         backend_switchable = health.get("backend_switchable", True)
+        # Whether the profile asks the chat bubble to hide inline tool-result blocks.
+        clean_chat_default = bool(health.get("clean_chat", False))
     except Exception:
         target_name = "Unknown Target"
         backend = "?"
         profile = "?"
         mapper = "?"
         backend_switchable = True
+
+    # Precedence: explicit launch override ('on'/'off'), then the profile default, then False.
+    clean_chat = {"on": True, "off": False}.get(clean_chat_mode, clean_chat_default)
+    log.info("clean_chat effective=%s (mode=%s, profile default=%s)",
+             clean_chat, clean_chat_mode, clean_chat_default)
+    print(f"  Clean chat: {'ON' if clean_chat else 'OFF'} "
+          f"(mode={clean_chat_mode}, profile default={clean_chat_default})")
 
     # Model catalogue (present only when the target opts in via mock.models_file).
     cat = harness_catalogue(harness_url)
@@ -172,7 +227,7 @@ def create_app(harness_url):
         try:
             data = harness_chat(harness_url, message, state["session_id"])
             state["last_response"] = data
-            reply = format_response(data)
+            reply = format_response(data, clean_chat)
             history.append({"role": "assistant", "content": reply})
         except Exception as e:
             history.append({"role": "assistant", "content": f"**Error:** {e}"})
@@ -296,7 +351,11 @@ def create_app(harness_url):
                 )
 
                 with gr.Tabs():
-                    with gr.Tab("Raw Response"):
+                    # With clean_chat on, the Raw Response tab is hidden but raw_md stays in
+                    # the callback outputs, so the raw response still streams to the browser
+                    # over queue/data (verified) — the Network tab reveals the tool result
+                    # while the UI shows only the clean answer.
+                    with gr.Tab("Raw Response", visible=not clean_chat):
                         raw_md = gr.Markdown("*Send a message first*")
                         refresh_raw_btn = gr.Button("Refresh", size="sm")
 
@@ -340,6 +399,11 @@ def main():
     parser.add_argument("--url", default="http://localhost:8000", help="Harness URL")
     parser.add_argument("--port", type=int, default=7860, help="Gradio port")
     parser.add_argument("--share", action="store_true", help="Create public link")
+    parser.add_argument("--clean-chat", choices=["auto", "on", "off"], default="auto",
+                        help="Hide inline tool-result blocks from the chat bubble (the raw "
+                             "response still streams to the browser, so the Network tab shows "
+                             "it). 'auto' follows the profile's mock.clean_chat; use 'off' for "
+                             "demonstrations that show the tool result in the window.")
     args = parser.parse_args()
 
     print(f"  Harness: {args.url}")
@@ -356,7 +420,7 @@ def main():
 
     print()
 
-    app = create_app(args.url)
+    app = create_app(args.url, args.clean_chat)
     app.launch(server_name="0.0.0.0", server_port=args.port, share=args.share, theme=gr.themes.Soft())
 
 
