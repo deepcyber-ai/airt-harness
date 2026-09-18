@@ -351,11 +351,12 @@ def create_app(harness_url, clean_chat_mode="auto"):
                 )
 
                 with gr.Tabs():
-                    # With clean_chat on, the Raw Response tab is hidden but raw_md stays in
-                    # the callback outputs, so the raw response still streams to the browser
-                    # over queue/data (verified) — the Network tab reveals the tool result
-                    # while the UI shows only the clean answer.
-                    with gr.Tab("Raw Response", visible=not clean_chat):
+                    # The Raw Response tab is always visible — a red-team inspection panel.
+                    # With clean_chat on, the chat bubble is stripped of tool-result blocks but
+                    # the raw response is still shown here (and on the wire). Teaching point: a
+                    # client-side strip is incomplete — the model can still narrate the query in
+                    # its own prose, which no bracket filter will catch.
+                    with gr.Tab("Raw Response"):
                         raw_md = gr.Markdown("*Send a message first*")
                         refresh_raw_btn = gr.Button("Refresh", size="sm")
 

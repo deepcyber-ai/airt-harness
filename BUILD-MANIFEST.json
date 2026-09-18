@@ -2,7 +2,7 @@
   "product": "airt-harness",
   "export_manifest_version": "0.3-draft",
   "source_revision": "30ae26e26e133e67688489b99ca66bf941fb8bc8",
-  "built_utc": "2026-09-18T15:18:32Z",
+  "built_utc": "2026-09-18T16:11:11Z",
   "file_count": 84,
   "scanner": {
     "version": "scan_secrets/1.0.0",
@@ -37,8 +37,8 @@
     },
     "CHANGELOG.md": {
       "source": "CHANGELOG.md",
-      "source_sha256": "62ded26a3b85891ea39ca56694c23ea3441d3f648698a2af6e9854f11c2ef18e",
-      "dest_sha256": "62ded26a3b85891ea39ca56694c23ea3441d3f648698a2af6e9854f11c2ef18e",
+      "source_sha256": "ff93cc2cffa43baa5041114cf47728d2d78f7777d93ecc57ed0a65cf3fc1471d",
+      "dest_sha256": "ff93cc2cffa43baa5041114cf47728d2d78f7777d93ecc57ed0a65cf3fc1471d",
       "transformed": false
     },
     "CONFIGURING-MODELS.md": {
@@ -127,8 +127,8 @@
     },
     "harness/gui.py": {
       "source": "harness/gui.py",
-      "source_sha256": "e0862f7a064e76bc5637e0263fac9a44ddf746541ecbac612d604c4462a977f0",
-      "dest_sha256": "e0862f7a064e76bc5637e0263fac9a44ddf746541ecbac612d604c4462a977f0",
+      "source_sha256": "8c933b169c3008083c8cb955d434e86543b610b276bd3a19e618e11e05fd20a2",
+      "dest_sha256": "8c933b169c3008083c8cb955d434e86543b610b276bd3a19e618e11e05fd20a2",
       "transformed": false
     },
     "harness/mappers/__init__.py": {

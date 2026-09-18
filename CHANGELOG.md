@@ -2,6 +2,14 @@
 
 All notable changes to the AIRT Harness public release. Newest first.
 
+## v1.0.12 — 2026-09-18
+
+- The GUI's **Raw Response tab is always visible again** (it was hidden when `clean_chat` was
+  on). `clean_chat` still strips inline tool-result blocks from the chat bubble; the raw
+  response is now shown in the Raw Response tab as well as on the wire, so the panel doubles as
+  a teaching aid — the tab shows what the client stripped, while the bubble can still leak a
+  query the model narrates in its own prose (which a client-side strip cannot catch).
+
 ## v1.0.11 — 2026-09-18
 
 - **GUI clean-chat display option.** A new `mock.clean_chat` profile setting makes the chat
