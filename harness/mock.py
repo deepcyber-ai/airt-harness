@@ -1387,15 +1387,19 @@ def main():
 
     model = args.model or DEFAULT_MODELS.get(args.backend, "echo")
 
-    # System prompt: CLI arg > profile-dir file > default
+    # System prompt (posture): --system-prompt CLI  >  profile mock.system_prompt
+    # (path relative to the profile dir)  >  the profile's mock/system_prompt.txt default.
     system_prompt = DEFAULT_SYSTEM_PROMPT
-    if args.system_prompt and Path(args.system_prompt).exists():
-        system_prompt = Path(args.system_prompt).read_text().strip()
+    _profile_sp = profile.get("mock", {}).get("system_prompt")
+    if args.system_prompt:
+        sp_path = Path(args.system_prompt)
+    elif _profile_sp:
+        sp_path = Path(profile_dir, _profile_sp)
     else:
-        mock_prompt = Path(profile_dir, "mock", "system_prompt.txt")
-        if mock_prompt.exists():
-            system_prompt = mock_prompt.read_text().strip()
-            logger.info(f"Loaded system prompt from {mock_prompt}")
+        sp_path = Path(profile_dir, "mock", "system_prompt.txt")
+    if sp_path.exists():
+        system_prompt = sp_path.read_text().strip()
+        logger.info(f"Loaded system prompt from {sp_path}")
 
     # Target's own input screening — on unless the profile opts out.
     input_filter = profile.get("mock", {}).get("input_filter", True)

@@ -2,6 +2,16 @@
 
 All notable changes to the AIRT Harness public release. Newest first.
 
+## v1.0.13 — 2026-09-19
+
+- **Target posture is now a profile setting.** `mock.system_prompt` in a profile selects which
+  system prompt the target runs (neutral / planted / hardened) with no launch flag; a
+  `--system-prompt` on the command still overrides it. Profiles without the key behave exactly
+  as before (they fall to `mock/system_prompt.txt`).
+- Clarified the simulated `execute_code` tool in the detector comments and tests: invoking it is
+  an observation in the event log, not a scored flag (the tool returns a fixed receipt and runs
+  no Python). No scoring change from v1.0.12.
+
 ## v1.0.12 — 2026-09-18
 
 - The GUI's **Raw Response tab is always visible again** (it was hidden when `clean_chat` was

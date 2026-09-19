@@ -2,7 +2,7 @@
   "product": "airt-harness",
   "export_manifest_version": "0.3-draft",
   "source_revision": "30ae26e26e133e67688489b99ca66bf941fb8bc8",
-  "built_utc": "2026-09-18T16:11:11Z",
+  "built_utc": "2026-09-19T12:47:22Z",
   "file_count": 84,
   "scanner": {
     "version": "scan_secrets/1.0.0",
@@ -37,8 +37,8 @@
     },
     "CHANGELOG.md": {
       "source": "CHANGELOG.md",
-      "source_sha256": "ff93cc2cffa43baa5041114cf47728d2d78f7777d93ecc57ed0a65cf3fc1471d",
-      "dest_sha256": "ff93cc2cffa43baa5041114cf47728d2d78f7777d93ecc57ed0a65cf3fc1471d",
+      "source_sha256": "b5e187bb1cdfebb27e137038e0cdd650d50f2e8da03e3cce4d5104b98134f336",
+      "dest_sha256": "b5e187bb1cdfebb27e137038e0cdd650d50f2e8da03e3cce4d5104b98134f336",
       "transformed": false
     },
     "CONFIGURING-MODELS.md": {
@@ -157,8 +157,8 @@
     },
     "harness/mock.py": {
       "source": "harness/mock.py",
-      "source_sha256": "32e87e517c08898b704aba9dc5625e327326c179c2f0a55d9ddd70d29c3db050",
-      "dest_sha256": "32e87e517c08898b704aba9dc5625e327326c179c2f0a55d9ddd70d29c3db050",
+      "source_sha256": "1b5935343a999a2e52fa54115a0f1813081ec18e26eff0234ce70c6b8dfb248e",
+      "dest_sha256": "1b5935343a999a2e52fa54115a0f1813081ec18e26eff0234ce70c6b8dfb248e",
       "transformed": false
     },
     "harness/pyrit.py": {
@@ -259,8 +259,8 @@
     },
     "profiles/deepcyber-ctf/extension.py": {
       "source": "profiles/deepcyber-ctf/extension.py",
-      "source_sha256": "49a42810816f212eca2dfc0991e814cca74c8231d2eb0050e1b8d743ff8990a2",
-      "dest_sha256": "49a42810816f212eca2dfc0991e814cca74c8231d2eb0050e1b8d743ff8990a2",
+      "source_sha256": "4ec44cfd729abfc8251958c2b2c6c69482aed444d6f3ba1b0f7123793aea29af",
+      "dest_sha256": "4ec44cfd729abfc8251958c2b2c6c69482aed444d6f3ba1b0f7123793aea29af",
       "transformed": false
     },
     "profiles/deepcyber-ctf/flags.json": {
@@ -295,8 +295,8 @@
     },
     "profiles/deepcyber-ctf/profile.yaml": {
       "source": "profiles/deepcyber-ctf/profile.yaml",
-      "source_sha256": "0b5a90f4f9edf297edf301ec31c02c6dc1cf257f277a774bb5bbbc67876dee98",
-      "dest_sha256": "0b5a90f4f9edf297edf301ec31c02c6dc1cf257f277a774bb5bbbc67876dee98",
+      "source_sha256": "199e9e5060d3190102ba2349c1b00c7b3648459704fbe45afaf3120ad5c7746a",
+      "dest_sha256": "199e9e5060d3190102ba2349c1b00c7b3648459704fbe45afaf3120ad5c7746a",
       "transformed": false
     },
     "profiles/deepcyber-ctf/vendor/larkfield-db-mcp/.gitignore": {

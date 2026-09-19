@@ -65,6 +65,13 @@ mock:
   url: "http://localhost:8089"
   backend: echo                # override at launch; echo will NOT honour the target logic
 
+  # Posture — which system prompt the target runs. Change this one line to switch:
+  #   mock/system_prompt.txt           neutral (plain, un-coached)  — the default
+  #   mock/planted_system_prompt.txt   planted (coached to misbehave — demos)
+  #   mock/system_prompt_hardened.txt  hardened (defensive)
+  # A --system-prompt on the launch command still overrides this.
+  system_prompt: mock/system_prompt.txt
+
   # Levels 0/1 do no input screening. Set true for the filtered posture (Level 2).
   input_filter: false
 
