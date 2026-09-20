@@ -316,7 +316,19 @@ def replay_session(
                 timeout=120,
             )
             data = resp.json()
-            new_response = data.get("answer", "")
+            # Different targets name the reply field differently: the harness API
+            # (:8000) returns "answer", direct Larkfield / the mock (:8081) returns
+            # "output", some return "response".  Read whichever is present so a
+            # direct-target replay keeps the real reply instead of silently scoring
+            # an empty string.  An unrecognised schema is an ERROR, not an empty
+            # answer — otherwise a successful HTTP call that we can't decode would
+            # look like a non-reproduction.
+            for _field in ("answer", "output", "response"):
+                if _field in data:
+                    new_response = data[_field]
+                    break
+            else:
+                new_response = f"[ERROR] unexpected response schema: keys={sorted(data)}"
         except Exception as e:
             new_response = f"[ERROR] {e}"
 

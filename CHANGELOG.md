@@ -2,6 +2,14 @@
 
 All notable changes to the AIRT Harness public release. Newest first.
 
+## v1.0.17 — 2026-09-20
+
+- **airt-replay decodes the target's reply schema on the live re-send.** A direct-target replay
+  (e.g. Larkfield on `:8081`, which returns `output`) now keeps the real reply instead of
+  silently reading an empty `answer`; the harness API's `answer` and a plain `response` are still
+  read. An **unrecognised** schema becomes an explicit `[ERROR]`, not an empty answer — so a
+  successful HTTP call we can't decode no longer looks like a non-reproduction.
+
 ## v1.0.16 — 2026-09-20
 
 - **The mock records a replayable `intel/responses.jsonl` on every chat** (profile-scoped,
