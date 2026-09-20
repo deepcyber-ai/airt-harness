@@ -2,6 +2,14 @@
 
 All notable changes to the AIRT Harness public release. Newest first.
 
+## v1.0.14 — 2026-09-20
+
+- **airt-replay: resolve the judge from `models.yaml`.** `--evaluate` gains `--judge-model NAME`
+  (with `--models PATH`, default `models.yaml`), so the replay scorer uses the same model
+  catalogue as the rest of the course — no separate `judge_config.yaml` to maintain. The
+  existing `--judge-config FILE` path is unchanged. Supports openai-compatible and Bedrock
+  judge models.
+
 ## v1.0.13 — 2026-09-19
 
 - **Target posture is now a profile setting.** `mock.system_prompt` in a profile selects which

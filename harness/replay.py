@@ -372,6 +372,45 @@ def load_judge_config(config_path: str) -> dict:
     }
 
 
+def judge_config_from_models(name: str, models_path: str = "models.yaml") -> dict:
+    """Resolve a judge config straight from the course ``models.yaml`` by model name,
+    so the replay scorer uses the same catalogue as the rest of the course (no separate
+    judge_config.yaml to maintain). Returns the same dict shape as load_judge_config().
+
+    Maps the catalogue entry's type to a judge provider:
+      openai / openai-compatible -> provider ``openai`` (api key read from its api_key_env)
+      aws-bedrock / bedrock      -> provider ``bedrock`` (region from the entry)
+    """
+    try:
+        with open(models_path) as f:
+            catalogue = yaml.safe_load(f) or {}
+    except FileNotFoundError:
+        sys.exit(f"--judge-model needs a models.yaml; not found at {models_path!r} "
+                 f"(pass --models PATH)")
+    models = catalogue.get("models", catalogue)
+    spec = models.get(name)
+    if not spec:
+        sys.exit(f"judge model {name!r} not in {models_path} "
+                 f"(available: {', '.join(sorted(models))})")
+    t = (spec.get("type") or "openai-compatible").lower()
+    if t in ("openai", "openai-compatible"):
+        provider, api_key = "openai", os.environ.get(spec.get("api_key_env", ""), "")
+    elif t in ("aws-bedrock", "bedrock"):
+        provider, api_key = "bedrock", ""
+    else:
+        sys.exit(f"judge model {name!r} has type {t!r}, which replay's scorer does not "
+                 f"support (openai-compatible or bedrock only)")
+    return {
+        "provider": provider,
+        "model": spec.get("model", name),
+        "api_key": api_key,
+        "base_url": spec.get("base_url", ""),
+        "region": spec.get("region", ""),
+        "temperature": 0.1,
+        "max_tokens": 500,
+    }
+
+
 def load_judge_prompts(prompts_path: str) -> tuple[str, dict]:
     """Load judge prompts from a YAML file.
 
@@ -684,7 +723,17 @@ Examples:
     )
     parser.add_argument(
         "--judge-config",
-        help="Path to judge config YAML",
+        help="Path to judge config YAML (or use --judge-model to resolve from models.yaml)",
+    )
+    parser.add_argument(
+        "--judge-model",
+        help="Resolve the judge from models.yaml by model name (e.g. gpt-4o-mini). "
+             "Uses the same catalogue as the course, so no judge_config.yaml is needed.",
+    )
+    parser.add_argument(
+        "--models",
+        default="models.yaml",
+        help="Path to models.yaml for --judge-model (default: models.yaml in the current dir)",
     )
     parser.add_argument(
         "--judge-prompts",
@@ -762,10 +811,13 @@ Examples:
 
     # ── Judge evaluation ────────────────────────────────────────
     if args.evaluate:
-        if not args.judge_config:
-            sys.exit("--evaluate requires --judge-config")
-
-        judge_config = load_judge_config(args.judge_config)
+        if args.judge_model:
+            judge_config = judge_config_from_models(args.judge_model, args.models)
+        elif args.judge_config:
+            judge_config = load_judge_config(args.judge_config)
+        else:
+            sys.exit("--evaluate needs --judge-model NAME (from models.yaml) "
+                     "or --judge-config FILE")
         print(
             f"\nRunning judge evaluation "
             f"({judge_config['provider']}/{judge_config['model']})..."
