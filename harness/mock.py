@@ -19,6 +19,7 @@ import os
 import random
 import time
 import uuid
+from datetime import datetime, timezone
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -54,6 +55,7 @@ logger = logging.getLogger("airt-mock")
 # Log paths -- set to profile-scoped defaults in main(), or generic fallback
 LOG_FILE = Path("results/mock_server.log")
 AUDIT_LOG_PATH = Path("results/mock-audit.jsonl")
+INTEL_PATH = Path("results/intel/responses.jsonl")   # replayable log (airt-replay), any route
 _file_handler_added = False
 
 
@@ -62,6 +64,8 @@ def _setup_log_paths(profile_dir: str):
     global LOG_FILE, AUDIT_LOG_PATH, _file_handler_added
     LOG_FILE = Path(profile_dir) / "mock_server.log"
     AUDIT_LOG_PATH = Path(profile_dir) / "mock-audit.jsonl"
+    global INTEL_PATH
+    INTEL_PATH = Path(profile_dir) / "intel" / "responses.jsonl"
     LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
     if not _file_handler_added:
         fh = logging.FileHandler(LOG_FILE)
@@ -73,6 +77,14 @@ def _setup_log_paths(profile_dir: str):
 def write_audit_entry(entry: dict):
     AUDIT_LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
     with open(AUDIT_LOG_PATH, "a") as f:
+        f.write(json.dumps(entry, default=str) + "\n")
+
+
+def write_intel_entry(entry: dict):
+    """Append one replayable record (airt-replay intel format) — written for EVERY chat,
+    so a session is replayable whether the target was reached via the mock or the API."""
+    INTEL_PATH.parent.mkdir(parents=True, exist_ok=True)
+    with open(INTEL_PATH, "a") as f:
         f.write(json.dumps(entry, default=str) + "\n")
 
 
@@ -1227,6 +1239,7 @@ async def handle_request(request: Request, path: str = "chat"):
     logger.info(f"SESSION={session_id} TURN={turn}  USER: \"{message[:80]}\"  LLM: \"{llm_response[:80]}\"  {duration_ms}ms")
 
     write_audit_entry({"timestamp": time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime(request_time)), "session_id": session_id, "prompt": message[:2000], "response": llm_response[:2000], "turn": turn, "duration_ms": duration_ms, "target": app_config.get("target", ""), "backend": app_config.get("backend", ""), "tool_events": tool_events})
+    write_intel_entry({"timestamp": datetime.now(timezone.utc).isoformat(), "session_id": session_id, "backend": app_config.get("backend", ""), "target": app_config.get("target", ""), "prompt": message, "answer": llm_response, "raw": {"tool_events": tool_events}, "error": None})
 
     # Build kwargs with agentic metadata if features are active.
     mock_kwargs: dict = {}

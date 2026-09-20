@@ -1,8 +1,8 @@
 {
   "product": "airt-harness",
   "export_manifest_version": "0.3-draft",
-  "source_revision": "57877ade66c044accb46ad32d6eea936b80f71b1",
-  "built_utc": "2026-09-20T14:20:04Z",
+  "source_revision": "c8c81ff3fed91caafd05f6525b1bc8cb3f1dce9d",
+  "built_utc": "2026-09-20T16:39:43Z",
   "file_count": 84,
   "scanner": {
     "version": "scan_secrets/1.0.0",
@@ -37,8 +37,8 @@
     },
     "CHANGELOG.md": {
       "source": "CHANGELOG.md",
-      "source_sha256": "46a27e1afdac3af2bd4fb151f00f3e0a95d2c978ab7fc24e1207780a64b26b27",
-      "dest_sha256": "46a27e1afdac3af2bd4fb151f00f3e0a95d2c978ab7fc24e1207780a64b26b27",
+      "source_sha256": "c7688474624f9e7c33fb631a11438fb84e31c1873b53ede9c8fb18ab6067b613",
+      "dest_sha256": "c7688474624f9e7c33fb631a11438fb84e31c1873b53ede9c8fb18ab6067b613",
       "transformed": false
     },
     "CONFIGURING-MODELS.md": {
@@ -157,8 +157,8 @@
     },
     "harness/mock.py": {
       "source": "harness/mock.py",
-      "source_sha256": "1b5935343a999a2e52fa54115a0f1813081ec18e26eff0234ce70c6b8dfb248e",
-      "dest_sha256": "1b5935343a999a2e52fa54115a0f1813081ec18e26eff0234ce70c6b8dfb248e",
+      "source_sha256": "3d4f386227e7516cb0c0af2899c6a2603f0e96d6b6a3aec16b2214b70e6dc609",
+      "dest_sha256": "3d4f386227e7516cb0c0af2899c6a2603f0e96d6b6a3aec16b2214b70e6dc609",
       "transformed": false
     },
     "harness/pyrit.py": {
@@ -169,8 +169,8 @@
     },
     "harness/replay.py": {
       "source": "harness/replay.py",
-      "source_sha256": "cf690c5cec3122be194d548cc563ca38b2b6f18f14791ef186064cbf80cc397b",
-      "dest_sha256": "cf690c5cec3122be194d548cc563ca38b2b6f18f14791ef186064cbf80cc397b",
+      "source_sha256": "02cb7b6ab9fb7aa8849671ddc5fb4edb95439066a0243b16e443bc3b30c31e98",
+      "dest_sha256": "02cb7b6ab9fb7aa8849671ddc5fb4edb95439066a0243b16e443bc3b30c31e98",
       "transformed": false
     },
     "harness/server.py": {

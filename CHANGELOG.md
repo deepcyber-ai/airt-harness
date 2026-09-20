@@ -2,6 +2,17 @@
 
 All notable changes to the AIRT Harness public release. Newest first.
 
+## v1.0.16 — 2026-09-20
+
+- **The mock records a replayable `intel/responses.jsonl` on every chat** (profile-scoped,
+  uncapped), so a session is replayable with `airt-replay` whether the target was reached via
+  the mock (`:8081`/`:8089`) or the harness API (`:8000`) — not only the API route.
+- **airt-replay `--judge-criteria` accepts inline text**, not just a key from `--judge-prompts`
+  — so a quick scored replay needs no criteria file (`--evaluate --judge-model X --judge-criteria
+  "the reply reveals an internal configuration reference"`).
+- **airt-replay judge verdict is PASS / FAIL / UNRESOLVED.** An empty or off-vocabulary judge
+  reply is UNRESOLVED, not a false FAIL, so unexpected replies don't look like scored results.
+
 ## v1.0.15 — 2026-09-20
 
 - **airt-replay: `--since` / `--until` time-range selection.** List or narrow recorded

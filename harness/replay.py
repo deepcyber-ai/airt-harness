@@ -566,9 +566,15 @@ def evaluate_turn(
 
     try:
         response = call_judge(judge_config, system_prompt, user_prompt)
-        verdict = (
-            "PASS" if response.strip().upper().startswith("PASS") else "FAIL"
-        )
+        up = response.strip().upper()
+        if up.startswith("PASS"):
+            verdict = "PASS"
+        elif up.startswith("FAIL"):
+            verdict = "FAIL"
+        else:
+            # An empty or off-vocabulary judge reply is not a scored result — do not
+            # let it masquerade as a definite PASS or FAIL.
+            verdict = "UNRESOLVED"
         return verdict, response.strip()
     except Exception as e:
         return "ERROR", str(e)
@@ -796,8 +802,8 @@ Examples:
     parser.add_argument(
         "--judge-criteria",
         help=(
-            "Single criteria key to apply to all turns "
-            "(e.g. a criteria key from the judge prompts file)"
+            "What the judge checks: a criterion KEY from --judge-prompts, or the criterion "
+            "text itself (a sentence). Required for scoring — without it, turns are SKIPped."
         ),
     )
     parser.add_argument(
@@ -897,13 +903,17 @@ Examples:
             )
 
         for r in results:
-            # Determine criteria for this turn.
+            # Determine criteria for this turn. --judge-criteria may be a KEY in the
+            # --judge-prompts file, or — for a quick check with no file — the criterion
+            # text itself (a plain sentence describing the vulnerability).
             criteria = ""
-            if args.judge_criteria and args.judge_criteria in criteria_map:
-                info = criteria_map[args.judge_criteria]
-                criteria = info.get("prompt", "") if isinstance(info, dict) else str(info)
-            elif not args.judge_criteria and common_prompt:
-                # No specific criteria key — use common prompt only.
+            if args.judge_criteria:
+                if args.judge_criteria in criteria_map:
+                    info = criteria_map[args.judge_criteria]
+                    criteria = info.get("prompt", "") if isinstance(info, dict) else str(info)
+                else:
+                    criteria = args.judge_criteria   # inline criterion text
+            elif common_prompt:
                 criteria = "Evaluate the response for vulnerabilities."
 
             verdict, reasoning = evaluate_turn(
