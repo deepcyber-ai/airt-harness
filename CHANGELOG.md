@@ -2,6 +2,13 @@
 
 All notable changes to the AIRT Harness public release. Newest first.
 
+## v1.0.15 — 2026-09-20
+
+- **airt-replay: `--since` / `--until` time-range selection.** List or narrow recorded
+  sessions by time — an ISO 8601 timestamp (`2026-09-20`, `2026-09-20T14:30`) or a relative
+  age (`2h`, `30m`, `7d`). A session matches if any of its turns falls in the window; the
+  record timestamps drive it.
+
 ## v1.0.14 — 2026-09-20
 
 - **airt-replay: resolve the judge from `models.yaml`.** `--evaluate` gains `--judge-model NAME`

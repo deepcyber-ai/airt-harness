@@ -47,7 +47,7 @@ import uuid
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -73,6 +73,7 @@ class ReplayTurn:
     prompt: str
     response: str = ""
     raw: dict | None = None
+    timestamp: str = ""   # ISO 8601 when the source has it; enables --since/--until
 
 
 # ── Source adapters ─────────────────────────────────────────────────
@@ -169,6 +170,7 @@ class IntelAdapter(SourceAdapter):
                     prompt=e.get("prompt", ""),
                     response=e.get("answer", ""),
                     raw=e.get("raw"),
+                    timestamp=e.get("timestamp", ""),
                 )
                 for i, e in enumerate(entries)
             ]
@@ -248,6 +250,7 @@ class MetabaseAdapter(SourceAdapter):
                     prompt=self._pick(r, self._PROMPT_COLS),
                     response=self._pick(r, self._RESPONSE_COLS),
                     raw=self._load_raw(self._pick(r, self._RAW_COLS)),
+                    timestamp=self._pick(r, ("timestamp", "time", "ts", "created_at", "datetime")),
                 )
                 for r in rows
             ]
@@ -668,6 +671,48 @@ def format_report(
 # ── CLI ────────────────────────────────────────────────────────────
 
 
+
+def parse_when(value: str) -> datetime:
+    """Parse a --since/--until value into a timezone-aware UTC datetime.
+
+    Accepts an ISO 8601 timestamp (date or datetime, with or without offset) or a
+    relative age like ``2h`` / ``30m`` / ``45s`` / ``7d`` meaning that long before now.
+    """
+    value = value.strip()
+    import re as _re
+    m = _re.fullmatch(r"(\d+)\s*([smhd])", value.lower())
+    if m:
+        n, unit = int(m.group(1)), m.group(2)
+        secs = n * {"s": 1, "m": 60, "h": 3600, "d": 86400}[unit]
+        return datetime.now(timezone.utc) - timedelta(seconds=secs)
+    try:
+        dt = datetime.fromisoformat(value)
+    except ValueError:
+        raise SystemExit(
+            f"--since/--until: cannot parse {value!r}. Use an ISO 8601 time "
+            f"(e.g. 2026-09-20 or 2026-09-20T14:30:00) or a relative age (e.g. 2h, 30m, 7d).")
+    return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
+
+
+def _turn_dt(ts: str) -> datetime | None:
+    if not ts:
+        return None
+    try:
+        dt = datetime.fromisoformat(ts)
+        return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
+    except ValueError:
+        return None
+
+
+def session_in_range(turns, since: datetime | None, until: datetime | None) -> bool:
+    """True if the session has at least one turn whose timestamp falls in [since, until].
+    A session with no parseable timestamp is excluded once a bound is set."""
+    stamps = [d for d in (_turn_dt(t.timestamp) for t in turns) if d is not None]
+    if not stamps:
+        return since is None and until is None
+    return any((since is None or d >= since) and (until is None or d <= until) for d in stamps)
+
+
 def main():
     parser = argparse.ArgumentParser(
         description=(
@@ -704,6 +749,15 @@ Examples:
     parser.add_argument(
         "--session",
         help="Session ID to replay (supports partial match)",
+    )
+    parser.add_argument(
+        "--since",
+        help="Only sessions with a turn at or after this time "
+             "(ISO 8601, e.g. 2026-09-20T14:00, or a relative age like 2h/30m/7d)",
+    )
+    parser.add_argument(
+        "--until",
+        help="Only sessions with a turn at or before this time (same formats as --since)",
     )
     parser.add_argument(
         "--harness-url",
@@ -767,9 +821,21 @@ Examples:
         f"{source.turn_count()} turns)"
     )
 
+    # Optional time-range filter (--since / --until) on the session set.
+    since = parse_when(args.since) if args.since else None
+    until = parse_when(args.until) if args.until else None
+
     # ── List sessions ───────────────────────────────────────────
     if args.list_sessions or not args.session:
         sessions = source.list_sessions()
+        if since or until:
+            total = len(sessions)
+            sessions = [sid for sid in sessions
+                        if session_in_range(source.get_session(sid), since, until)]
+            bound = " ".join(filter(None, [
+                f"since {since.isoformat()}" if since else "",
+                f"until {until.isoformat()}" if until else ""]))
+            print(f"  time filter ({bound}): {len(sessions)} of {total} sessions")
         print(f"\n{'Session ID':<72s} {'Turns':>5s}")
         print("-" * 79)
         for sid in sessions:

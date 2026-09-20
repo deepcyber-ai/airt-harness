@@ -1,8 +1,8 @@
 {
   "product": "airt-harness",
   "export_manifest_version": "0.3-draft",
-  "source_revision": "79e31c5ac66a26debcd45dcaf3a3dcaea6b609e9",
-  "built_utc": "2026-09-20T13:04:11Z",
+  "source_revision": "57877ade66c044accb46ad32d6eea936b80f71b1",
+  "built_utc": "2026-09-20T14:20:04Z",
   "file_count": 84,
   "scanner": {
     "version": "scan_secrets/1.0.0",
@@ -37,8 +37,8 @@
     },
     "CHANGELOG.md": {
       "source": "CHANGELOG.md",
-      "source_sha256": "3381d15d9b085e57d3f751c2c005c8cccac4f8b192af2099441abeb8b820ac31",
-      "dest_sha256": "3381d15d9b085e57d3f751c2c005c8cccac4f8b192af2099441abeb8b820ac31",
+      "source_sha256": "46a27e1afdac3af2bd4fb151f00f3e0a95d2c978ab7fc24e1207780a64b26b27",
+      "dest_sha256": "46a27e1afdac3af2bd4fb151f00f3e0a95d2c978ab7fc24e1207780a64b26b27",
       "transformed": false
     },
     "CONFIGURING-MODELS.md": {
@@ -169,8 +169,8 @@
     },
     "harness/replay.py": {
       "source": "harness/replay.py",
-      "source_sha256": "f1f7ac3fa3389f267d5cec6f9e54b650e827ae2f227d3e2cc15e3c94b44e5c81",
-      "dest_sha256": "f1f7ac3fa3389f267d5cec6f9e54b650e827ae2f227d3e2cc15e3c94b44e5c81",
+      "source_sha256": "cf690c5cec3122be194d548cc563ca38b2b6f18f14791ef186064cbf80cc397b",
+      "dest_sha256": "cf690c5cec3122be194d548cc563ca38b2b6f18f14791ef186064cbf80cc397b",
       "transformed": false
     },
     "harness/server.py": {
