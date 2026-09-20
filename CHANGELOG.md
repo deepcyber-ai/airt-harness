@@ -2,6 +2,13 @@
 
 All notable changes to the AIRT Harness public release. Newest first.
 
+## v1.0.18 — 2026-09-20
+
+- **airt-replay treats a replay error as UNRESOLVED, not FAIL.** When the live re-send
+  fails (network error) or returns an undecodable schema, the reply is `[ERROR] …`; the
+  judge is now skipped and the turn is UNRESOLVED, so a transient failure can't read as
+  "no longer reproduces" (a false non-reproduction).
+
 ## v1.0.17 — 2026-09-20
 
 - **airt-replay decodes the target's reply schema on the live re-send.** A direct-target replay

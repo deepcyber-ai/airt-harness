@@ -563,10 +563,17 @@ def evaluate_turn(
         result:        a replay result dict (needs 'prompt' and 'new_response')
 
     Returns:
-        (verdict, reasoning) where verdict is PASS / FAIL / SKIP / ERROR.
+        (verdict, reasoning) where verdict is PASS / FAIL / UNRESOLVED / SKIP / ERROR.
     """
     if not criteria:
         return "SKIP", "No judge criteria provided for this turn"
+
+    # A replay error (network failure, or an undecodable response schema) is not a
+    # judgeable reply.  Scoring the "[ERROR] …" text would let a transient failure
+    # read as FAIL — i.e. as "no longer reproduces" — a false non-reproduction.
+    # Treat it as UNRESOLVED, without spending a judge call.
+    if result.get("new_response", "").startswith("[ERROR]"):
+        return "UNRESOLVED", f"Replay did not return a judgeable reply: {result['new_response'][:200]}"
 
     user_prompt = (
         f"{criteria}\n\n"
